@@ -1,3 +1,5 @@
+import { NextFunction, Request, Response } from "express";
+
 export interface AuthSignupUserType {
   name: string;
   email: string;
@@ -13,4 +15,10 @@ export interface AuthSignupAddressType{
     country: string;
     state: string;
     city: string;
-  };
+};
+
+export type ControllerType = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => Promise<void | Response<any, Record<string, any>>>

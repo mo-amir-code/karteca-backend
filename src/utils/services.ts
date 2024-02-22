@@ -37,3 +37,30 @@ const generateReferCode = (telephone: string): string => {
 export const generateOTP = (): number => {
     return Math.floor(100000 + Math.random() * 900000);
 }
+
+export const getEarningLevelWise = (level: number, withdrawable: number): number => {
+    switch(level){
+        case 1:
+            return withdrawable * 30;
+        case 2:
+            return withdrawable * 15;
+        case 3:
+            return withdrawable * 7;
+        case 4:
+            return withdrawable * 3;
+        case 5:
+            return withdrawable * 2;
+        case 6:
+            return withdrawable * 1;
+        case 7:
+            return withdrawable * 0.5;
+        case 8:
+            return withdrawable * 0.5;
+        case 9:
+            return withdrawable * 0.5;
+        case 10:
+            return withdrawable * 0.5;
+        default:
+            return 0;
+    }
+}
