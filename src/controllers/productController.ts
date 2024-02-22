@@ -1,21 +1,22 @@
-import ProductModel from "../models/Product.js";
+import Product from "../models/Product.js";
 import RatingAndReviewsModel from "../models/RatingAndReviews.js";
 import BannerModel from "../models/Banner.js";
 import { TryCatch } from "../middlewares/error.js";
 import ErrorHandler from "../utils/utility-class.js";
+import { CProductType } from "../types/user.js";
 
 export const getAllProducts = TryCatch(async (req, res, next) => {
-  const smartWatches = await ProductModel.find({
+  const smartWatches = await Product.find({
     $and: [{ category: "audio and video" }, { subCategory: "smart" }],
   })
     .sort({ sold: -1 })
     .limit(6);
-  const wirelessItems = await ProductModel.find({
+  const wirelessItems = await Product.find({
     $and: [{ category: "audio" }, { subCategory: "wireless" }],
   })
     .sort({ sold: -1 })
     .limit(6);
-  const wiredItems = await ProductModel.find({
+  const wiredItems = await Product.find({
     $and: [{ category: "audio" }, { subCategory: "wired" }],
   })
     .sort({ sold: -1 })
@@ -39,7 +40,7 @@ export const getProductById = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("Product Id is not found.", 404));
   }
 
-  const product = await ProductModel.findById(productId).select("-ownerId");
+  const product = await Product.findById(productId).select("-ownerId");
   const ratingAndReviews = await RatingAndReviewsModel.find({
     product: product._id,
   });
@@ -73,5 +74,16 @@ export const getBanners = TryCatch(async (req, res, next) => {
       success: true,
       message: "Banners fetched.",
       data: banners,
+    });
+});
+
+export const createProduct = TryCatch(async (req, res, next) => {
+    const product = req.body as CProductType;
+
+    await Product.create(product);
+
+    return res.status(200).json({
+      success: true,
+      message: "Product added.",
     });
 });

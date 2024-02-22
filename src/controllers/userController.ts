@@ -12,6 +12,7 @@ import Transaction from "../models/Transaction.js";
 import { getEarningLevelWise } from "../utils/services.js";
 import { TryCatch } from "../middlewares/error.js";
 import ErrorHandler from "../utils/utility-class.js";
+import { CGiftCardType, CRatingAndReviewsType, CUserCardType, CUserDeliveryAddressType, CWishlistType } from "../types/user.js";
 
 export const fetchUserProfile = TryCatch(async (req, res, next) => {
   const { userId } = req.query;
@@ -107,7 +108,7 @@ export const fetchUserWallets = TryCatch(async (req, res, next) => {
   });
 });
 
-export const fetchUserCoupons = TryCatch(async (req, res, next) => {
+export const fetchUserCoupons = TryCatch(async (req, res) => {
   const coupons = await Coupon.find({ isClaimed: false }).select("-issuedBy");
 
   return res.status(200).json({
@@ -221,4 +222,78 @@ export const fetchUserReferralDashboard = TryCatch(async (req, res, next) => {
         withdrawalHistory,
       },
     });
+});
+
+export const addUserAddress = TryCatch(async (req, res, next) => {
+  const address = req.body as CUserDeliveryAddressType;
+
+  if(!address){
+    return next(new ErrorHandler("Something is missing in the address.", 404));
+  }
+
+  await DeliveryAddress.create(address);
+
+  return res.status(200).json({
+    success: true,
+    message: "Delivery address added successfully."
+  });
+})
+
+export const addGiftCard = TryCatch(async (req, res, next) => {
+  const giftCard = req.body as CGiftCardType;
+
+  if(!giftCard){
+    return next(new ErrorHandler("Something is missing in the GiftCard.", 404));
+  }
+
+
+  return res.status(200).json({
+    success: true,
+    message: "Gift Card created successfully."
+  });
+});
+
+export const addUserCard = TryCatch(async (req, res, next) => {
+  const userCard = req.body as CUserCardType;
+
+  if(!userCard){
+    return next(new ErrorHandler("Something is missing in the card information.", 404));
+  }
+
+  await Card.create(userCard);
+  
+  return res.status(200).json({
+    success: true,
+    message: "User Card added successfully."
+  });
+});
+
+export const addUserReview = TryCatch(async (req, res, next) => {
+  const review = req.body as CRatingAndReviewsType;
+
+  if(!review){
+    return next(new ErrorHandler("Something is missing in the review.", 404));
+  }
+
+  await RatingAndReviews.create(review);
+  
+  return res.status(200).json({
+    success: true,
+    message: "Your review added successfully."
+  });
+});
+
+export const addUserWishlist = TryCatch(async (req, res, next) => {
+  const {userId, product} = req.body as CWishlistType;
+
+  if(!product || !userId){
+    return next(new ErrorHandler("Something is missing in the review.", 404));
+  }
+
+  await Wishlist.findOneAndUpdate({userId}, {$push: {products: product}});
+  
+  return res.status(200).json({
+    success: true,
+    message: "Your wishlist added successfully."
+  });
 });
