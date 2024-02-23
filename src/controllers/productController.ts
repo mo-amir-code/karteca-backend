@@ -5,7 +5,7 @@ import { TryCatch } from "../middlewares/error.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { CProductType } from "../types/user.js";
 
-export const getAllProducts = TryCatch(async (req, res, next) => {
+export const getAllProducts = TryCatch(async (req, res) => {
   const smartWatches = await Product.find({
     $and: [{ category: "audio and video" }, { subCategory: "smart" }],
   })
@@ -62,7 +62,7 @@ export const getProductById = TryCatch(async (req, res, next) => {
   });
 });
 
-export const getBanners = TryCatch(async (req, res, next) => {
+export const getBanners = TryCatch(async (req, res) => {
     const banners = await BannerModel.find({
       $and: [
         { promotionStart: { $gt: Date.now() } },
@@ -77,7 +77,7 @@ export const getBanners = TryCatch(async (req, res, next) => {
     });
 });
 
-export const createProduct = TryCatch(async (req, res, next) => {
+export const createProduct = TryCatch(async (req, res) => {
     const product = req.body as CProductType;
 
     await Product.create(product);

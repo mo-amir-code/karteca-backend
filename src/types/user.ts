@@ -88,3 +88,32 @@ export interface CProductType{
   specifications: object;
   importantNote: string;
 }
+
+export interface CPaymentOrderType{
+  userId: string;
+  product: string;
+  purchasedPrice: number;
+  color?: string;
+  quantity: number;
+  deliveryAddress: string;
+  paymentMode: "online" | "cash";
+  totalAmount: number;
+  transaction?: string;
+  mobileNumber?: number
+}
+
+export interface CTransactionType{
+  _id?:string;
+  userId: string;
+  type: "withdrawal" | "credit" | "spend";
+  mode: "referral" | "giftCard" | "shopping";
+  transactionId?: string;
+  amount: number;
+  bankDetails?: {
+    name: string;
+    accountNumber: number;
+    ifsc: string;
+  };
+  upiId?: string;
+  card?: string;
+}

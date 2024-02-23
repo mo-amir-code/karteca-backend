@@ -13,7 +13,7 @@ interface OrderType extends Document {
   refund?: "cancelled" | "processing" | "success";
   paymentMode: "card" | "upi" | "cash";
   totalAmount: number;
-  transaction?: Schema.Types.ObjectId;
+  transaction: Schema.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,16 +38,16 @@ const orderSchema: Schema<OrderType> = new Schema(
     status: {
       type: String,
       enum: ["successful", "cancelled", "processing"],
-      required: true,
+      default: "processing"
     },
     refund: { type: String, enum: ["cancelled", "processing", "success"] },
     paymentMode: {
       type: String,
-      enum: ["card", "upi", "cash"],
+      enum: ["online", "cash"],
       required: true,
     },
     totalAmount: { type: Number, required: true },
-    transaction: { type: Schema.Types.ObjectId, ref: "Transaction" },
+    transaction: { type: Schema.Types.ObjectId, required: true, ref: "Transaction" },
   },
   {
     timestamps: true,
