@@ -4,10 +4,10 @@ import routers from "./routers/index.js";
 import { connectToMongo } from "./utils/mongoDB.js";
 import { errorHandler } from "./middlewares/error.js";
 import morgan from "morgan";
-import {Redis} from "ioredis";
+// import {Redis} from "ioredis";
 import cors from "cors"
 
-export const redis = new Redis(process.env.REDIS_URI || "", {maxRetriesPerRequest: null});
+// export const redis = new Redis(process.env.REDIS_URI || "", {maxRetriesPerRequest: null});
 
 const app: Express = express();
 

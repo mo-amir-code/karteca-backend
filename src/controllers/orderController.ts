@@ -86,13 +86,18 @@ export const createOrders = TryCatch(async (req, res, next) => {
 
   await Order.create(newOrders);
 
-  req.body = {
-    transactionId: newTransaction._id,
-    userId,
-    amount: totalAmount,
-    redirectPath: "/order/payment/status",
-    mobileNumber: odrs[0].mobileNumber || 9999999999,
-  };
+  // req.body = {
+  //   transactionId: newTransaction._id,
+  //   userId,
+  //   amount: totalAmount,
+  //   redirectPath: "/order/payment/status",
+  //   mobileNumber: odrs[0].mobileNumber || 9999999999,
+  // };
 
-  next();
+  // next();
+
+  return res.status(200).json({
+    success: true,
+    message: "Order created successfully."
+  });
 });
