@@ -4,32 +4,27 @@ import BannerModel from "../models/Banner.js";
 import { TryCatch } from "../middlewares/error.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { CProductType } from "../types/user.js";
+import { redis } from "../app.js";
 
-export const getAllProducts = TryCatch(async (req, res) => {
-  const smartWatches = await Product.find({
-    $and: [{ category: "audio and video" }, { subCategory: "smart" }],
-  })
-    .sort({ sold: -1 })
-    .limit(6);
-  const wirelessItems = await Product.find({
-    $and: [{ category: "audio" }, { subCategory: "wireless" }],
-  })
-    .sort({ sold: -1 })
-    .limit(6);
-  const wiredItems = await Product.find({
-    $and: [{ category: "audio" }, { subCategory: "wired" }],
-  })
-    .sort({ sold: -1 })
-    .limit(6);
+export const getTopProducts = TryCatch(async (req, res) => {
+
+
+  const products = await redis.get("topProducts");
+  if(products){
+    return res.status(200).json({
+      success: true,
+      message: "Top Products fetched.",
+      data: JSON.parse(products)
+    });
+  }
+
+  const topProducts = await Product.find().sort({ sold: -1 })
+  await redis.set("topProducts", JSON.stringify(topProducts));
 
   return res.status(200).json({
     success: true,
-    message: "Products fetched.",
-    data: {
-      smartWatches,
-      wirelessItems,
-      wiredItems,
-    },
+    message: "Top Products fetched.",
+    data: topProducts
   });
 });
 
