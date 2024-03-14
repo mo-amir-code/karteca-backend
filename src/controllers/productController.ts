@@ -15,12 +15,12 @@ export const getTopProducts = TryCatch(async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Top Products fetched. catched",
-      data: cathedData
+      data: JSON.parse(cathedData)
     });
   }
 
   const topProducts = await Product.find().sort({ sold: -1 })
-  await redis.set("topProducts", "hello world");
+  await redis.set("topProducts", JSON.stringify(topProducts));
 
   return res.status(200).json({
     success: true,
