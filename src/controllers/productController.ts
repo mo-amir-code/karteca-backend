@@ -4,22 +4,23 @@ import BannerModel from "../models/Banner.js";
 import { TryCatch } from "../middlewares/error.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { CProductType } from "../types/user.js";
-import { redis } from "../app.js";
+import { redis } from "../utils/Redis.js";
 
 export const getTopProducts = TryCatch(async (req, res) => {
 
 
-  const products = await redis.get("topProducts");
-  if(products){
+  const cathedData = await redis.get("topProducts");
+
+  if(cathedData){
     return res.status(200).json({
       success: true,
-      message: "Top Products fetched.",
-      data: JSON.parse(products)
+      message: "Top Products fetched. catched",
+      data: cathedData
     });
   }
 
   const topProducts = await Product.find().sort({ sold: -1 })
-  await redis.set("topProducts", JSON.stringify(topProducts));
+  await redis.set("topProducts", "hello world");
 
   return res.status(200).json({
     success: true,
