@@ -9,22 +9,68 @@ import { redis } from "../utils/Redis.js";
 export const getTopProducts = TryCatch(async (req, res) => {
 
 
-  const cathedData = await redis.get("topProducts");
+  // const cathedData = await redis.get("topProducts");
 
-  if(cathedData){
-    return res.status(200).json({
-      success: true,
-      message: "Top Products fetched. catched",
-      data: JSON.parse(cathedData)
-    });
-  }
+  // if(cathedData){
+  //   return res.status(200).json({
+  //     success: true,
+  //     message: "Top Products fetched. catched",
+  //     data: JSON.parse(cathedData)
+  //   });
+  // }
 
-  const topProducts = await Product.find().sort({ sold: -1 })
-  await redis.set("topProducts", JSON.stringify(topProducts));
+  const topProducts = await Product.find().sort({ sold: -1 }).limit(5)
+  // await redis.set("topProducts", JSON.stringify(topProducts));
 
   return res.status(200).json({
     success: true,
     message: "Top Products fetched.",
+    data: topProducts
+  });
+});
+
+export const getLatestProducts = TryCatch(async (req, res) => {
+
+
+  // const cathedData = await redis.get("topProducts");
+
+  // if(cathedData){
+  //   return res.status(200).json({
+  //     success: true,
+  //     message: "Top Products fetched. catched",
+  //     data: JSON.parse(cathedData)
+  //   });
+  // }
+
+  const topProducts = await Product.find().sort({ sold: -1 }).limit(5)
+  // await redis.set("topProducts", JSON.stringify(topProducts));
+
+  return res.status(200).json({
+    success: true,
+    message: "Latest Products fetched.",
+    data: topProducts
+  });
+});
+
+export const getComboProducts = TryCatch(async (req, res) => {
+
+
+  // const cathedData = await redis.get("topProducts");
+
+  // if(cathedData){
+  //   return res.status(200).json({
+  //     success: true,
+  //     message: "Top Products fetched. catched",
+  //     data: JSON.parse(cathedData)
+  //   });
+  // }
+
+  const topProducts = await Product.find().sort({ sold: -1 }).limit(5)
+  // await redis.set("topProducts", JSON.stringify(topProducts));
+
+  return res.status(200).json({
+    success: true,
+    message: "Combo's Products fetched.",
     data: topProducts
   });
 });

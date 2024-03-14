@@ -22,7 +22,7 @@ const router: Router = express.Router();
 router
   .get("/profile", fetchUserProfile)
   .get("/addresses", fetchUserAddresses)
-  .post("/addresses", addUserAddress)
+  .post("/address", addUserAddress)
   .get("/giftcards", fetchUserGiftCards)
   .post("/giftcards", addGiftCard) // TODO: Implementation is requried.
   .get("/cards", fetchUserSavedCards)
