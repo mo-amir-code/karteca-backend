@@ -5,8 +5,8 @@ interface RatingAndReviewsType extends Document {
   product: Types.ObjectId;
   userId: Types.ObjectId;
   rate: number;
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
   likes: Types.ObjectId[];
   dislikes: Types.ObjectId[];
   images: string[];
@@ -20,8 +20,8 @@ const RatingSchema: Schema<RatingAndReviewsType> =
       product: { type: Schema.Types.ObjectId, ref: "Product", required: true },
       userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
       rate: { type: Number, required: true },
-      title: { type: String, required: true },
-      description: { type: String, required: true },
+      title: { type: String },
+      description: { type: String },
       likes: [{ type: Schema.Types.ObjectId, ref: "User" }],
       dislikes: [{ type: Schema.Types.ObjectId, ref: "User" }],
       images: [{ type: String }],

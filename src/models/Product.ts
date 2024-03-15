@@ -4,7 +4,7 @@ interface ProductType extends Document {
   _id: string;
   ownerId: Schema.Types.ObjectId;
   title: string;
-  description: string | object;
+  description: object;
   price: number;
   stock: number;
   colors: string[];
@@ -20,7 +20,7 @@ interface ProductType extends Document {
     covered: string;
   };
   specifications: object;
-  importantNote: string;
+  importantNote?: string;
   createdAt: Date;
   updatedAt: Date;
 }

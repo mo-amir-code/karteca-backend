@@ -135,3 +135,17 @@ export function calculateSHA256(input: string) {
   hash.update(input);
   return hash.digest("hex");
 }
+
+export const calculateRatingAndReviews = async (ratingAndReviews:any[]) => {
+  const totalRating = ratingAndReviews.filter((item) => item.title !== undefined).length;
+  const totalReviews = ratingAndReviews.length - totalRating;
+
+  let avgRating = await ratingAndReviews.reduce((rate: number, current: any) => {
+    return rate + current.rate;
+  }, 0);
+
+  
+  avgRating = avgRating / ratingAndReviews.length;
+
+  return {totalRating, totalReviews, avgRating}
+}
