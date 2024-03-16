@@ -94,19 +94,19 @@ export const sendOTP = TryCatch(async (req, res, next) => {
   user.otpToken = otpToken;
   await user.save();
 
+  res.setHeader("Set-Cookie", `otptoken=${otpToken};  Max-Age: 900`);
+  
+
   await sendMail(mailOption);
   return res.status(200).json({
     success: true,
-    message: "OTP sent successfully",
-    data: {
-      otpToken,
-      otp,
-    },
+    message: "OTP sent successfully"
   });
 });
 
 export const verify = TryCatch(async (req, res, next) => {
-    const { token, otp } = req.body as { token?: string; otp?: number };
+    const { otp } = req.body as { otp?: number };
+    const token = req.cookies["otptoken"];
 
     if (!token || !otp) {
       return next(new ErrorHandler("Something missing.", 400));
@@ -116,7 +116,14 @@ export const verify = TryCatch(async (req, res, next) => {
       return next(new ErrorHandler("Internal Error Occurred!", 500));
     }
 
-    const { userId } = jwt.decode(token, { json: true }) as { userId?: string };
+    const { userId } = jwt.verify(token, jwtSecretKey) as { userId?: string };
+
+    if(!userId){
+      return res.status(400).json({
+        success: false,
+        message: "Something went wrong with token",
+      }); 
+    }
 
     const user = await User.findById(userId);
     const isOTPCorrect = await bcrypt.compare(otp.toString(), user.otp);
@@ -130,11 +137,8 @@ export const verify = TryCatch(async (req, res, next) => {
     }
 
     const sessionToken = jwt.sign({ userId }, jwtSecretKey);
-    res.cookie("sessiontoken", sessionToken, {
-      maxAge: Date.now() + 4 * 24 * 60 * 60 * 1000, // Expires after 4 days
-      // httpOnly: true, // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
-      // secure: true // Ensures the cookie is sent only over HTTPS
-    });
+
+    res.setHeader("Set-Cookie", `sessiontoken=${sessionToken}; Max-Age: 345600`)
 
     user.verified = true;
     user.otp = undefined;
@@ -199,6 +203,8 @@ export const signin = TryCatch(async (req, res, next) => {
       // httpOnly: true, // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
       // secure: true // Ensures the cookie is sent only over HTTPS
     });
+
+    res.setHeader("Set-Cookie", `sessiontoken=${sessionToken}; Max-Age:345600`)
 
     return res.status(200).json({
       success: true,

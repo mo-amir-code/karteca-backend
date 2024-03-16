@@ -8,12 +8,17 @@ import cors from "cors"
 
 const app: Express = express();
 
+const corsOptions = {
+    origin: 'http://localhost:3000', // Replace with your frontend URL
+    credentials: true, // Allow cookies
+};
+
+app.use(cookieParser());
 connectToMongo();
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
 app.use("/api/v1", routers);
 
 app.use(errorHandler);
