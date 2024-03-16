@@ -9,7 +9,7 @@ import cors from "cors"
 const app: Express = express();
 
 const corsOptions = {
-    origin: process.env.DEVELOPMENT === "development"? 'http://localhost:3000' : "https://my-memik.vercel.app/", // Replace with your frontend URL
+    origin: process.env.DEVELOPMENT === "development"? 'http://localhost:3000' : "https://my-memik.vercel.app", // Replace with your frontend URL
     credentials: true, // Allow cookies
 };
 
