@@ -4,7 +4,9 @@ import { ControllerType } from "../types/user.js";
 
 export const errorHandler = (err:ErrorHandler, req:Request, res:Response) => {
     err.message ||= "Internal Error Occurred!";
-    err.statusCode ||= 500
+    err.statusCode ||= 500;
+
+    res.setHeader('Content-Type', 'application/json');
 
     return res.status(err.statusCode).json({
         success: false,

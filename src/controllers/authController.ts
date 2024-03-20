@@ -164,7 +164,8 @@ export const signin = TryCatch(async (req, res, next) => {
       email,
       phone,
       password,
-    }: { email: string; phone: string; password: string } = req.body;
+    }: { email: string; phone?: string; password: string } = req.body;
+    
 
     if (!email && !phone) {
       return next(new ErrorHandler("Please provide all the required field.", 400));
@@ -176,6 +177,7 @@ export const signin = TryCatch(async (req, res, next) => {
     } else {
       user = await User.findOne({ phone });
     }
+
 
     if (!user) {
       return next(new ErrorHandler("You are not registered.", 400));
@@ -199,17 +201,20 @@ export const signin = TryCatch(async (req, res, next) => {
     await user.save();
 
     res.cookie("sessiontoken", sessionToken, {
-      maxAge: Date.now() + 4 * 24 * 60 * 60 * 1000, // Expires after 4 days
+      maxAge: Date.now() + 4 * 24 * 60 * 60 * 1000,
       // httpOnly: true, // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
       // secure: true // Ensures the cookie is sent only over HTTPS
     });
 
-    res.setHeader("Set-Cookie", `sessiontoken=${sessionToken}; Max-Age:345600`)
+    // res.setHeader("Set-Cookie", `sessiontoken=${sessionToken}; Max-Age:345600`)
 
     return res.status(200).json({
       success: true,
       message: "You are logged in. Enjoy!",
-      user,
+      data: {
+        userId:user._id,
+        name:user.name
+      },
     });
 });
 
