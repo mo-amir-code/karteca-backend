@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from "express";
+import ErrorHandler from "../utils/utility-class.js";
 
 export interface AuthSignupUserType {
   name: string;
@@ -18,6 +19,13 @@ export interface AuthSignupAddressType{
 };
 
 export type ControllerType = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => Promise<void | Response<any, Record<string, any>>>
+
+export type ErrorControllerType = (
+  err:ErrorHandler,
   req: Request,
   res: Response,
   next: NextFunction

@@ -20,7 +20,6 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/v1", routers);
-
 app.use(errorHandler);
 
 app.listen(process.env.PORT, () => {
