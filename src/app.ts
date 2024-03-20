@@ -9,7 +9,7 @@ import cors from "cors"
 const app: Express = express();
 
 const corsOptions = {
-    origin: process.env.CLIENT_ORIGIN, // Replace with your frontend URL
+    origin: process.env.CLIENT_ORIGIN, 
     credentials: true, // Allow cookies
 };
 
