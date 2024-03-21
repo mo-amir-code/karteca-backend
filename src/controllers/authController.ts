@@ -41,7 +41,7 @@ export const signup = TryCatch(async (req, res, next) => {
   const user: UserType | null = await User.findOne({ email });
 
   if (user && user.verified) {
-    return next(new ErrorHandler("Your account is already registered.", 400));
+    return next(new ErrorHandler("This email is already registered.", 409));
   } else if (user) {
     req.body.userId = user._id;
     return next();
@@ -57,7 +57,7 @@ export const sendOTP = TryCatch(async (req, res, next) => {
   const user: UserType | null = await User.findById(userId);
 
   if (!user) {
-    return next(new ErrorHandler("User not found.", 400));
+    return next(new ErrorHandler("User not found.", 404));
   }
 
   let saltRoundString: string | undefined = process.env.BCRYPT_SALT_ROUND;
@@ -81,7 +81,7 @@ export const sendOTP = TryCatch(async (req, res, next) => {
     mailOption = {
       to: user.email,
       subject: "OTP to change your password.",
-      html: `Your OTP is ${otp}, and click <a href="${process.env.CLIENT_ORIGIN}/auth/reset?token=${otpToken}">here</a> to reset your password.`,
+      html: `Your OTP is ${otp}, and click <a href="${process.env.CLIENT_ORIGIN}/auth/reset-password?token=${otpToken}">here</a> to reset your password.`,
     };
   }
 
@@ -250,7 +250,16 @@ export const resetPassword = TryCatch(async (
   res,
   next
 ) => {
-    const { token, newPassword, otp } = req.body;
+    const { token:isToken, newPassword, otp } = req.body;
+
+    let token;
+
+    if(isToken){
+      token = isToken;
+    }else{
+      token = req.cookies["otptoken"];
+    }
+
 
     if (!token || !newPassword || !otp) {
       return next(new ErrorHandler("Something is missing.", 400));
