@@ -253,16 +253,15 @@ export const resetPassword = TryCatch(async (
     const { token:isToken, newPassword, otp } = req.body;
 
     let token;
-
+    
     if(isToken){
       token = isToken;
     }else{
       token = req.cookies["otptoken"];
     }
 
-
     if (!token || !newPassword || !otp) {
-      return next(new ErrorHandler("Something is missing.", 400));
+      return next(new ErrorHandler("Something is missing.", 404));
     }
 
     if (!jwtSecretKey) {
