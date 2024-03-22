@@ -94,7 +94,13 @@ export const sendOTP = TryCatch(async (req, res, next) => {
   user.otpToken = otpToken;
   await user.save();
 
-  res.setHeader("Set-Cookie", `otptoken=${otpToken};  Max-Age: 900`);
+  res.cookie("otptoken", otpToken, {
+    maxAge: 15 * 60 * 1000, // 15 minutes
+    domain: process.env.SERVER_ORIGIN, // Set to the root domain
+    secure: true, // Ensure the cookie is sent only over HTTPS
+    httpOnly: true // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
+  });
+  
   
 
   await sendMail(mailOption);
@@ -138,7 +144,12 @@ export const verify = TryCatch(async (req, res, next) => {
 
     const sessionToken = jwt.sign({ userId }, jwtSecretKey);
 
-    res.setHeader("Set-Cookie", `sessiontoken=${sessionToken}; Max-Age: 345600`)
+    res.cookie("sessiontoken", sessionToken, {
+      maxAge: 4 * 24 * 60 * 60 * 1000, // 4 days
+      domain: process.env.SERVER_ORIGIN, // Set to the root domain
+      secure: true, // Ensure the cookie is sent only over HTTPS
+      httpOnly: true // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
+    });
 
     user.verified = true;
     user.otp = undefined;
@@ -200,11 +211,14 @@ export const signin = TryCatch(async (req, res, next) => {
     user.sessionToken = sessionToken;
     await user.save();
 
+
     res.cookie("sessiontoken", sessionToken, {
-      maxAge: Date.now() + 4 * 24 * 60 * 60 * 1000,
-      // httpOnly: true, // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
-      // secure: true // Ensures the cookie is sent only over HTTPS
+      maxAge: 4 * 24 * 60 * 60 * 1000, // 4 days
+      domain: process.env.SERVER_ORIGIN, // Set to the root domain
+      secure: true, // Ensure the cookie is sent only over HTTPS
+      httpOnly: true // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
     });
+    
 
     // res.setHeader("Set-Cookie", `sessiontoken=${sessionToken}; Max-Age:345600`)
 
