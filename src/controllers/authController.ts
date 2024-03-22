@@ -95,10 +95,11 @@ export const sendOTP = TryCatch(async (req, res, next) => {
   await user.save();
 
   res.cookie("otptoken", otpToken, {
-    maxAge: 15 * 60 * 1000, // 15 minutes
+    maxAge: Date.now() + 15 * 60 * 1000, // 15 minutes
     domain: process.env.ROOT_DOMAIN, // Set to the root domain
     secure: true, // Ensure the cookie is sent only over HTTPS
-    httpOnly: true // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
+    httpOnly: true,  // Makes the cookie accessible only via HTTP(S) requests, not JavaScript 
+    sameSite: 'none'
   });
   
   
@@ -145,10 +146,11 @@ export const verify = TryCatch(async (req, res, next) => {
     const sessionToken = jwt.sign({ userId }, jwtSecretKey);
 
     res.cookie("sessiontoken", sessionToken, {
-      maxAge: 4 * 24 * 60 * 60 * 1000, // 4 days
+      maxAge: Date.now() + 4 * 24 * 60 * 60 * 1000, // 4 days
       domain: process.env.ROOT_DOMAIN, // Set to the root domain
       secure: true, // Ensure the cookie is sent only over HTTPS
-      httpOnly: true // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
+      httpOnly: true,  // Makes the cookie accessible only via HTTP(S) requests, not JavaScript 
+      sameSite: "none"
     });
 
     user.verified = true;
@@ -213,10 +215,11 @@ export const signin = TryCatch(async (req, res, next) => {
 
 
     res.cookie("sessiontoken", sessionToken, {
-      maxAge: 4 * 24 * 60 * 60 * 1000, // 4 days
+      maxAge: Date.now() + 4 * 24 * 60 * 60 * 1000, // 4 days
       domain: process.env.ROOT_DOMAIN, // Set to the root domain
       secure: true, // Ensure the cookie is sent only over HTTPS
-      httpOnly: true // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
+      httpOnly: true,  // Makes the cookie accessible only via HTTP(S) requests, not JavaScript 
+      sameSite: 'none'
     });
     
 
