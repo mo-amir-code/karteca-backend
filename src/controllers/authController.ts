@@ -96,7 +96,7 @@ export const sendOTP = TryCatch(async (req, res, next) => {
 
   res.cookie("otptoken", otpToken, {
     maxAge: 15 * 60 * 1000, // 15 minutes
-    domain: process.env.SERVER_ORIGIN, // Set to the root domain
+    domain: process.env.ROOT_DOMAIN, // Set to the root domain
     secure: true, // Ensure the cookie is sent only over HTTPS
     httpOnly: true // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
   });
@@ -146,7 +146,7 @@ export const verify = TryCatch(async (req, res, next) => {
 
     res.cookie("sessiontoken", sessionToken, {
       maxAge: 4 * 24 * 60 * 60 * 1000, // 4 days
-      domain: process.env.SERVER_ORIGIN, // Set to the root domain
+      domain: process.env.ROOT_DOMAIN, // Set to the root domain
       secure: true, // Ensure the cookie is sent only over HTTPS
       httpOnly: true // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
     });
@@ -214,7 +214,7 @@ export const signin = TryCatch(async (req, res, next) => {
 
     res.cookie("sessiontoken", sessionToken, {
       maxAge: 4 * 24 * 60 * 60 * 1000, // 4 days
-      domain: process.env.SERVER_ORIGIN, // Set to the root domain
+      domain: process.env.ROOT_DOMAIN, // Set to the root domain
       secure: true, // Ensure the cookie is sent only over HTTPS
       httpOnly: true // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
     });
