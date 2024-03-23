@@ -12,10 +12,10 @@ import Transaction from "../models/Transaction.js";
 import { getEarningLevelWise } from "../utils/services.js";
 import { TryCatch } from "../middlewares/error.js";
 import ErrorHandler from "../utils/utility-class.js";
-import { CGiftCardType, CRatingAndReviewsType, CUserCardType, CUserDeliveryAddressType, CWishlistType } from "../types/user.js";
+import { CGiftCardType, CRatingAndReviewsType, CUserCardType, CUserDeliveryAddressType, CWishlistType, UserEditType } from "../types/user.js";
 
 export const fetchUserProfile = TryCatch(async (req, res, next) => {
-  const { userId } = req.query;
+  const { userId } = req.params;
 
   if (!userId) {
     return next(new ErrorHandler("Something is missing here", 404));
@@ -26,7 +26,17 @@ export const fetchUserProfile = TryCatch(async (req, res, next) => {
   return res.status(200).json({
     success: true,
     message: "User information fetched.",
-    data: { ...user },
+    data: user,
+  });
+});
+
+export const editUser = TryCatch(async (req, res) => {
+  const newUserUpdate = req.body as UserEditType;
+
+  await User.findByIdAndUpdate(newUserUpdate.userId, newUserUpdate);
+  return res.status(200).json({
+    success: true,
+    message: "Update user.",
   });
 });
 

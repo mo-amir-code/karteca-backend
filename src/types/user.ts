@@ -125,3 +125,11 @@ export interface CTransactionType{
   upiId?: string;
   card?: string;
 }
+
+export interface UserEditType {
+  userId:string,
+  name?:string,
+  email?:string,
+  phone?:string,
+  gender?:"male" | "female" | "transgender",
+}

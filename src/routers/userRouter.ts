@@ -15,12 +15,14 @@ import {
   addUserCard,
   addUserReview,
   addUserWishlist,
+  editUser,
 } from "../controllers/userController.js";
 
 const router: Router = express.Router();
 
 router
-  .get("/profile", fetchUserProfile)
+  .get("/:userId", fetchUserProfile)
+  .patch("/edit", editUser)
   .get("/addresses", fetchUserAddresses)
   .post("/address", addUserAddress)
   .get("/giftcards", fetchUserGiftCards)
