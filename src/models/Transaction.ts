@@ -1,7 +1,6 @@
 import mongoose, { Document, Schema, Model } from "mongoose";
 
 interface TransactionType extends Document {
-  _id: string;
   userId: Schema.Types.ObjectId;
   type: "withdrawal" | "credit" | "spend";
   mode: "referral" | "giftCard" | "shopping";

@@ -16,6 +16,8 @@ import {
   addUserReview,
   addUserWishlist,
   editUser,
+  deleteUserAddress,
+  updateUserAddress,
 } from "../controllers/userController.js";
 
 const router: Router = express.Router();
@@ -23,8 +25,10 @@ const router: Router = express.Router();
 router
   .get("/:userId", fetchUserProfile)
   .patch("/edit", editUser)
-  .get("/addresses", fetchUserAddresses)
+  .get("/addresses/:userId", fetchUserAddresses)
   .post("/address", addUserAddress)
+  .delete("/address", deleteUserAddress)
+  .patch("/address", updateUserAddress)
   .get("/giftcards", fetchUserGiftCards)
   .post("/giftcards", addGiftCard) // TODO: Implementation is requried.
   .get("/cards", fetchUserSavedCards)

@@ -41,7 +41,8 @@ export const editUser = TryCatch(async (req, res) => {
 });
 
 export const fetchUserAddresses = TryCatch(async (req, res, next) => {
-  const { userId } = req.query;
+  const { userId } = req.params;
+
 
   if (!userId) {
     return next(new ErrorHandler("Something is missing here.", 404));
@@ -246,6 +247,36 @@ export const addUserAddress = TryCatch(async (req, res, next) => {
   return res.status(200).json({
     success: true,
     message: "Delivery address added successfully."
+  });
+})
+
+export const deleteUserAddress = TryCatch(async (req, res, next) => {
+  const {addressId} = req.body;
+
+  if(!addressId){
+    return next(new ErrorHandler("Address Id is missing", 404));
+  }
+
+  await DeliveryAddress.findByIdAndDelete(addressId);
+
+  return res.status(200).json({
+    success: true,
+    message: "Address deleted successfully."
+  });
+})
+
+export const updateUserAddress = TryCatch(async (req, res, next) => {
+  const address = req.body as CUserDeliveryAddressType;
+
+  if(!address){
+    return next(new ErrorHandler("Something is missing in the address.", 404));
+  }
+
+  const ua = await DeliveryAddress.findByIdAndUpdate(address._id, address, {new: true});
+
+  return res.status(200).json({
+    success: true,
+    message: "Delivery address updated successfully."
   });
 })
 

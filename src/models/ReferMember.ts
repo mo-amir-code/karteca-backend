@@ -1,7 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 interface ReferMemberType extends Document {
-    _id: string;
   userId: Schema.Types.ObjectId;
   withdrawalPermission: boolean;
   referralEarning: number;

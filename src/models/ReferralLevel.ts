@@ -1,7 +1,6 @@
 import mongoose, { Schema, Document, Model, Types } from "mongoose";
 
 interface ReferralLevelType extends Document {
-  _id: string;
   userId: Types.ObjectId;
   level: number;
   users: Types.ObjectId[];

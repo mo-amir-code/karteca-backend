@@ -1,7 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 interface NotificationType extends Document {
-  _id: string;
   userId: Schema.Types.ObjectId;
   message: string;
   type: "payment" | "order" | "offer" | "other";

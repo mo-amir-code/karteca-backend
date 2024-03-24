@@ -32,6 +32,7 @@ export type ErrorControllerType = (
 ) => Promise<void | Response<any, Record<string, any>>>
 
 export interface CUserDeliveryAddressType{
+  _id:string;
   userId: string;
   name: string;
   email: string;

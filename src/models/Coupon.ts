@@ -1,7 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 interface CouponType extends Document {
-    _id: string;
     code: string;
     amount: number;
     title: string;

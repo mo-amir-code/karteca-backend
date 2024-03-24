@@ -1,7 +1,6 @@
 import mongoose, {Schema} from "mongoose";
 
 interface BankType extends Document {
-    _id: string;
     userId: Schema.Types.ObjectId;
     name: string;
     accountNumber: number;

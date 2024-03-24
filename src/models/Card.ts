@@ -1,7 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
 interface CardType extends Document {
-  _id: string;
   userId: Schema.Types.ObjectId;
   cardServiceName: string;
   cardNumber: number;

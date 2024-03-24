@@ -1,7 +1,6 @@
 import mongoose, {Schema} from "mongoose";
 
 interface BannerType extends Document {
-    _id: string;
     userId: Schema.Types.ObjectId;
     product: Schema.Types.ObjectId;
     bannerUrl: string;

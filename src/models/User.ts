@@ -1,7 +1,6 @@
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface UserType extends Document {
-  _id: string;
   name: string;
   email: string;
   gender: "male" | "female" | "transgender";

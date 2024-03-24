@@ -1,7 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 interface OrderType extends Document {
-  _id: string;
   userId: Schema.Types.ObjectId;
   product: Schema.Types.ObjectId;
   purchasedPrice: number;

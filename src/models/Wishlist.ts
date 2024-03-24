@@ -1,7 +1,6 @@
 import mongoose, { Schema, Document, Model, Types } from "mongoose";
 
 interface WishlistType extends Document {
-  _id: string;
   userId: Types.ObjectId;
   products: [Schema.Types.ObjectId];
   createdAt: Date;

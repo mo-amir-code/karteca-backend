@@ -1,7 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 interface ProductType extends Document {
-  _id: string;
   ownerId: Schema.Types.ObjectId;
   title: string;
   description: object;

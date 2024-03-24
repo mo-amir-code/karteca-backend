@@ -1,7 +1,6 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 
 interface RatingAndReviewsType extends Document {
-  _id: string;
   product: Types.ObjectId;
   userId: Types.ObjectId;
   rate: number;

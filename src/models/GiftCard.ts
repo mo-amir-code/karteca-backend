@@ -1,7 +1,6 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
 interface GiftCardType extends Document {
-  _id: string;
   gifterId: Schema.Types.ObjectId;
   gifterName?: string;
   recieverId: Schema.Types.ObjectId;
