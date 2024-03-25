@@ -10,7 +10,10 @@ export const getCartItemsByUserId = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("UserId is not found.", 404));
   }
 
-  const carts = await Cart.find({ userId }).populate("product");
+  const carts = await Cart.find({ userId }).populate({
+    path: "product",
+    select: "title thumbnail specifications"
+  }).select("quantity totalAmount currentPrice");
 
   return res.status(200).json({
     success: true,
