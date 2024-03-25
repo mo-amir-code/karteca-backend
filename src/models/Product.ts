@@ -13,8 +13,8 @@ interface ProductType extends Document {
   images: string[];
   category: "audio" | "audio and video" | "gadgets";
   subCategory: "wired" | "wireless" | "analog" | "smart";
-  highlights: string[];
-  warranty: {
+  highlights?: string[];
+  warranty?: {
     serviceType: string;
     covered: string;
   };

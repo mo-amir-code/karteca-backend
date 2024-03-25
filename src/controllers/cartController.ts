@@ -1,5 +1,6 @@
 import { TryCatch } from "../middlewares/error.js";
 import Cart from "../models/Cart.js";
+import { APICartType } from "../types/cart.js";
 import ErrorHandler from "../utils/utility-class.js";
 
 export const getCartItemsByUserId = TryCatch(async (req, res, next) => {
@@ -18,17 +19,27 @@ export const getCartItemsByUserId = TryCatch(async (req, res, next) => {
 });
 
 export const createCart = TryCatch(async (req, res, next) => {
-  const { userId, product, quantity, currentPrice, totalAmount } = req.body;
+  const { userId, product, quantity, currentPrice, totalAmount } = req.body as APICartType;
 
+  
   if (!userId || !product || !quantity || !currentPrice || !totalAmount) {
     return next(new ErrorHandler("Something is missing here.", 404));
+  }
+
+  const isAlreadyInCart = await Cart.findOne({$and: [{userId: userId}, {product: product}]});
+  
+  if(isAlreadyInCart){
+    return res.status(409).json({
+      success: false,
+      message: "Item already in cart",
+    });
   }
 
   await Cart.create(req.body);
 
   return res.status(200).json({
     success: true,
-    message: "Item added to the cart",
+    message: "Item added to cart",
   });
 });
 

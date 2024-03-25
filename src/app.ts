@@ -5,6 +5,7 @@ import { connectToMongo } from "./utils/mongoDB.js";
 import { errorHandler } from "./middlewares/error.js";
 import morgan from "morgan";
 import cors from "cors"
+import { createProducts } from "./utils/createProducts.js";
 
 const app: Express = express();
 
@@ -12,6 +13,8 @@ const corsOptions = {
     origin: process.env.CLIENT_ORIGIN, 
     credentials: true, // Allow cookies
 };
+
+// createProducts(50)
 
 app.use(cookieParser());
 connectToMongo();

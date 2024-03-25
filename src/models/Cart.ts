@@ -5,6 +5,7 @@ interface CartType extends Document {
     product: Schema.Types.ObjectId,
     color?: string,
     quantity: number,
+    discount?: number,
     currentPrice: number,
     totalAmount: number,
     createdAt: Date,
@@ -16,6 +17,7 @@ const cartSchema: Schema<CartType> = new Schema({
     product: {type: Schema.Types.ObjectId, ref: "Product", required: true},
     color: {type: String},
     quantity: {type: Number, default: 1},
+    discount: {type: Number, default: 0},
     currentPrice: {type: Number, required: true},
     totalAmount: {type: Number, required: true},
 });
