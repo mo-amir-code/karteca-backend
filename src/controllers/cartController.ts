@@ -21,6 +21,22 @@ export const getCartItemsByUserId = TryCatch(async (req, res, next) => {
   });
 });
 
+export const getCartCountByUserId = TryCatch(async (req, res, next) => {
+  const { userId } = req.params;
+
+  if (!userId) {
+    return next(new ErrorHandler("UserId is not found.", 404));
+  }
+
+  const cartsId = await Cart.find({ userId }).select("product");
+  const totalItems = cartsId.map((it) => it.product);
+
+  return res.status(200).json({
+    success: true,
+    data: totalItems,
+  });
+});
+
 export const createCart = TryCatch(async (req, res, next) => {
   const { userId, product, quantity, currentPrice, totalAmount } = req.body as APICartType;
 
