@@ -165,7 +165,7 @@ export const fetchUserNotifications = TryCatch(async (req, res, next) => {
 });
 
 export const fetchUserWishlist = TryCatch(async (req, res, next) => {
-  const { userId } = req.query;
+  const { userId } = req.params;
 
   if (!userId) {
     return next(new ErrorHandler("Something is missing here.", 404));
@@ -180,6 +180,62 @@ export const fetchUserWishlist = TryCatch(async (req, res, next) => {
     success: true,
     message: "User wishlist fetched.",
     data: wishlist,
+  });
+});
+
+export const fetchUserWishlistItems = TryCatch(async (req, res, next) => {
+  const { userId } = req.params;
+
+  if (!userId) {
+    return next(new ErrorHandler("Something is missing here.", 404));
+  }
+
+  const wishlistItems = await Wishlist.findOne({ userId }).select("-userId");
+
+  return res.status(200).json({
+    success: true,
+    message: "User wishlist Counted.",
+    data: wishlistItems?.products || [],
+  });
+});
+
+export const createUserWishlistItems = TryCatch(async (req, res, next) => {
+  const { userId, productId } = req.body;
+
+  if (!userId) {
+    return next(new ErrorHandler("Something is missing here.", 404));
+  }
+
+  let wishlistItems;
+
+  wishlistItems = await Wishlist.findOne({ userId });
+
+  if(wishlistItems){
+    wishlistItems.products.push(productId);
+    await wishlistItems.save();
+  }else{
+    wishlistItems = await Wishlist.create({userId, products: [productId]});
+  }
+
+
+  return res.status(200).json({
+    success: true,
+    message: "Item added in wishlist.",
+  });
+});
+
+export const deleteUserWishlistItems = TryCatch(async (req, res, next) => {
+  const { userId, productId } = req.body;
+
+  if (!userId) {
+    return next(new ErrorHandler("Something is missing here.", 404));
+  }
+
+  await Wishlist.findOneAndUpdate({ userId }, {$pull: {products: productId}});
+
+  return res.status(200).json({
+    success: true,
+    message: "Item deleted from the wishlist.",
   });
 });
 

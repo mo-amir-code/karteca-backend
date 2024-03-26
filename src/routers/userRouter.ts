@@ -18,6 +18,9 @@ import {
   editUser,
   deleteUserAddress,
   updateUserAddress,
+  fetchUserWishlistItems,
+  createUserWishlistItems,
+  deleteUserWishlistItems,
 } from "../controllers/userController.js";
 
 const router: Router = express.Router();
@@ -38,7 +41,10 @@ router
   .get("/reviews", fetchUserRatingAndReviews)
   .post("/reviews", addUserReview)
   .get("/notifications", fetchUserNotifications)
-  .get("/wishlist", fetchUserWishlist)
+  .get("/wishlist/:userId", fetchUserWishlist)
+  .get("/wishlist/items/:userId", fetchUserWishlistItems)
+  .post("/wishlist/items", createUserWishlistItems)
+  .delete("/wishlist/items", deleteUserWishlistItems)
   .post("/wishlist", addUserWishlist)
   .get("/referral-dashboard", fetchUserReferralDashboard);
 
