@@ -8,7 +8,7 @@ interface OrderType extends Document {
   quantity: number;
   deliveryAddress: Schema.Types.ObjectId;
   deliveryStatus: "pending" | "dispatched" | "shipped" | "delivered";
-  status: "successful" | "cancelled" | "processing";
+  orderStatus: "successful" | "cancelled" | "processing";
   refund?: "cancelled" | "processing" | "success";
   paymentMode: "card" | "upi" | "cash";
   totalAmount: number;
@@ -34,7 +34,7 @@ const orderSchema: Schema<OrderType> = new Schema(
       enum: ["pending", "dispatched", "shipped", "delivered"],
       default: "pending",
     },
-    status: {
+    orderStatus: {
       type: String,
       enum: ["successful", "cancelled", "processing"],
       default: "processing"
