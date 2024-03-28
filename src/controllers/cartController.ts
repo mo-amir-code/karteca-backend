@@ -12,8 +12,8 @@ export const getCartItemsByUserId = TryCatch(async (req, res, next) => {
 
   const carts = await Cart.find({ userId }).populate({
     path: "product",
-    select: "title thumbnail specifications"
-  }).select("quantity totalAmount currentPrice");
+    select: "title thumbnail specifications price"
+  }).select("quantity totalAmount currentPrice discount");
 
   return res.status(200).json({
     success: true,
