@@ -99,16 +99,13 @@ export interface CProductType{
 }
 
 export interface CPaymentOrderType{
-  userId: string;
   product: string;
   purchasedPrice: number;
   color?: string;
   quantity: number;
   deliveryAddress: string;
-  paymentMode: "online" | "cash";
   totalAmount: number;
   transaction?: string;
-  mobileNumber?: number
 }
 
 export interface CTransactionType{

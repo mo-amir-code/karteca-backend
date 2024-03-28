@@ -13,7 +13,7 @@ export const getCartItemsByUserId = TryCatch(async (req, res, next) => {
   const carts = await Cart.find({ userId }).populate({
     path: "product",
     select: "title thumbnail specifications price"
-  }).select("quantity totalAmount currentPrice discount");
+  }).select("quantity totalAmount currentPrice discount color");
 
   return res.status(200).json({
     success: true,

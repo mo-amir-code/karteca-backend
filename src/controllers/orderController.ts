@@ -3,6 +3,8 @@ import Order from "../models/Order.js";
 import { CPaymentOrderType, CTransactionType } from "../types/user.js";
 import ErrorHandler from "../utils/utility-class.js";
 import Transaction from "../models/Transaction.js";
+import razorpayInstance from "../utils/razorpay.js";
+import User from "../models/User.js";
 
 export const fetchUserOrder = TryCatch(async (req, res, next) => {
   const { userId } = req.query;
@@ -53,20 +55,18 @@ export const fetchUserOrderById = TryCatch(async (req, res, next) => {
 });
 
 export const createOrders = TryCatch(async (req, res, next) => {
-  const odrs = req.body as [CPaymentOrderType];
+  const {orders, paymentMode, userId} = req.body as {paymentMode: "online" | "cash" , orders:[CPaymentOrderType], userId:string};
 
-  if (!(odrs.length > 0)) {
+  if (!(orders.length > 0)) {
     return next(new ErrorHandler("Orders are missing.", 404));
   }
 
-  const totalAmount: number = odrs.reduce(
+  const totalAmount: number = orders.reduce(
     (total: number, current: CPaymentOrderType) => {
       return total + current.totalAmount;
     },
     0
   );
-
-  const userId = odrs[0].userId;
 
   const txnData: CTransactionType = {
     userId: userId,
@@ -77,27 +77,47 @@ export const createOrders = TryCatch(async (req, res, next) => {
 
   const newTransaction = await Transaction.create(txnData);
 
-  const newOrders = odrs.map((order) => {
+  const newOrders = orders.map((order) => {
     return {
       ...order,
       transaction: newTransaction._id,
+      userId,
+      paymentMode
     };
   });
 
-  await Order.create(newOrders);
+  await Order.create(newOrders);  
 
-  // req.body = {
-  //   transactionId: newTransaction._id,
-  //   userId,
-  //   amount: totalAmount,
-  //   redirectPath: "/order/payment/status",
-  //   mobileNumber: odrs[0].mobileNumber || 9999999999,
-  // };
+  const user = await User.findById(userId).select("name email phone");
 
-  // next();
+  const paymentOrder = await razorpayInstance.orders.create({
+    amount: totalAmount * 100,
+    currency: "INR",
+    receipt: newTransaction._id,
+  });
+
+
+  const resData = {
+    "key": `${process.env.RAZORPAY_KEY_ID}`,
+    "amount": `${totalAmount*100}`,
+    "currency": "INR",
+    "name": process.env.COMPANY_NAME,
+    "image": "",
+    "order_id": paymentOrder.id,
+    "callback_url": `${process.env.CLIENT_ORIGIN}/user/cart`,
+    "prefill":{
+      "name": user.name,
+      "email": user.email,
+      "contact": user.phone,
+    },
+    "theme":{
+      "color": process.env.PRIMARY_COLOR
+    }
+  }
 
   return res.status(200).json({
     success: true,
-    message: "Order created successfully."
+    message: "Order created successfully.",
+    data: resData
   });
 });

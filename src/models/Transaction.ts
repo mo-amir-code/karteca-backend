@@ -4,7 +4,9 @@ interface TransactionType extends Document {
   userId: Schema.Types.ObjectId;
   type: "withdrawal" | "credit" | "spend";
   mode: "referral" | "giftCard" | "shopping";
-  transactionId?: string;
+  paymentId: string,
+  paymentOrderId: string,
+  paymentSignatureId: string;
   amount: number;
   status: "pending" | "processing" | "failed" | "success";
   bankDetails?: {
@@ -32,7 +34,9 @@ const transactionSchema: Schema<TransactionType> = new Schema<TransactionType>(
       required: true,
       enum: ["referral", "giftCard", "shopping"],
     },
-    transactionId: { type: String },
+    paymentId: { type: String },
+    paymentOrderId: { type: String },
+    paymentSignatureId: { type: String },
     amount: { type: Number, required: true },
     status: {
       type: String,
