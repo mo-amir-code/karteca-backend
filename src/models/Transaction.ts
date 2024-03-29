@@ -6,16 +6,9 @@ interface TransactionType extends Document {
   mode: "referral" | "giftCard" | "shopping";
   paymentId: string,
   paymentOrderId: string,
-  paymentSignatureId: string;
+  paymentSignature: string;
   amount: number;
   status: "pending" | "processing" | "failed" | "success";
-  bankDetails?: {
-    name: string;
-    accountNumber: number;
-    ifsc: string;
-  };
-  upiId?: string;
-  card?: Schema.Types.ObjectId;
   currency: "inr" | "usd";
   createdAt: Date;
   updatedAt: Date;
@@ -36,20 +29,13 @@ const transactionSchema: Schema<TransactionType> = new Schema<TransactionType>(
     },
     paymentId: { type: String },
     paymentOrderId: { type: String },
-    paymentSignatureId: { type: String },
+    paymentSignature: { type: String },
     amount: { type: Number, required: true },
     status: {
       type: String,
       enum: ["pending", "processing", "failed", "success"],
       default: 'pending'
     },
-    bankDetails: {
-      name: { type: String },
-      accountNumber: { type: Number },
-      ifsc: { type: String },
-    },
-    upiId: { type: String },
-    card: { type: Schema.Types.ObjectId || String, ref: "Card" },
     currency: { type: String, default: "inr", enum: ["inr", "usd"] },
   },
   {

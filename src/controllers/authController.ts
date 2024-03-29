@@ -101,8 +101,7 @@ export const sendOTP = TryCatch(async (req, res, next) => {
     httpOnly: true,  // Makes the cookie accessible only via HTTP(S) requests, not JavaScript 
     sameSite: 'none'
   });
-  
-  
+
 
   await sendMail(mailOption);
   return res.status(200).json({

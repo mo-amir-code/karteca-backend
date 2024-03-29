@@ -73,65 +73,8 @@ export const getEarningLevelWise = (
   }
 };
 
-export const makePayment = async ({
-  transactionId,
-  userId,
-  amount,
-  redirectPath,
-  mobileNumber,
-}: {
-  transactionId: string;
-  userId: string;
-  amount: number;
-  redirectPath: string;
-  mobileNumber: number;
-}) => {
-  const payload = {
-    merchantId: process.env.PHONEPE_MERCHANT_ID,
-    merchantTransactionId: transactionId,
-    merchantUserId: userId,
-    amount: amount * 100,
-    redirectUrl: `${process.env.SERVER_ORIGIN}/api/v1${redirectPath}/${transactionId}`,
-    redirectMode: "POST",
-    callbackUrl: `${process.env.SERVER_ORIGIN}/api/v1${redirectPath}/${transactionId}`,
-    mobileNumber: mobileNumber,
-    paymentInstrument: {
-      type: "PAY_PAGE",
-    },
-  };
-
-  const dataPayload = JSON.stringify(payload);
-
-  const dataBase64 = Buffer.from(dataPayload).toString("base64");
-
-  const fullUrl = dataBase64 + "/pg/v1/pay" + process.env.PHONEPE_SALT_KEY;
-  const dataSha256 = calculateSHA256(fullUrl);
-
-  const checkSum = dataSha256 + "###" + process.env.PHONEPE_SALT_INDEX;
-
-  const paymentAPI = `${process.env.PHONEPE_UAT_PAY_API_URL}/pay` || "";
-  // console.log(paymentAPI);
-
-  const response = await axios.post(
-    paymentAPI,
-    {
-      request: dataBase64,
-    },
-    {
-      headers: {
-        accept: "application/json",
-        "Content-Type": "application/json",
-        "X-VERIFY": checkSum,
-      },
-    }
-  );
-
-  const redirectUrl = response.data.data.instrumentResponse.redirectInfo.url;
-  return redirectUrl;
-};
-
 export function calculateSHA256(input: string) {
-  const hash = crypto.createHash("sha256");
+  const hash = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!);
   hash.update(input);
   return hash.digest("hex");
 }

@@ -96,28 +96,24 @@ export const createOrders = TryCatch(async (req, res, next) => {
     receipt: newTransaction._id,
   });
 
-
-  const resData = {
-    "key": `${process.env.RAZORPAY_KEY_ID}`,
-    "amount": `${totalAmount*100}`,
-    "currency": "INR",
-    "name": process.env.COMPANY_NAME,
-    "image": "",
-    "order_id": paymentOrder.id,
-    "callback_url": `${process.env.CLIENT_ORIGIN}/user/cart`,
-    "prefill":{
-      "name": user.name,
-      "email": user.email,
-      "contact": user.phone,
-    },
-    "theme":{
-      "color": process.env.PRIMARY_COLOR
-    }
-  }
-
   return res.status(200).json({
     success: true,
     message: "Order created successfully.",
-    data: resData
+    data: {
+      key: process.env.RAZORPAY_KEY_ID,
+      name: process.env.COMPANY_NAME,
+      currency: "INR",
+      amount: totalAmount * 100,
+      orderId: paymentOrder.id,
+      prefill:{
+        name: user.name,
+        email: user.email,
+        contact: user.phone,
+      },
+      theme: {
+        color: process.env.PRIMARY_COLOR
+      },
+      transactionId: newTransaction._id
+    }
   });
 });

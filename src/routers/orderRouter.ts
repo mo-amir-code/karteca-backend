@@ -8,6 +8,5 @@ router
    .get("/", fetchUserOrder)
    .get("/:orderId", fetchUserOrderById)
    .post("/", createOrders)
-   // .post("/payment/status/:transactionId", orderPaymentStatus)
 
 export default router;
