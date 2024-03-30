@@ -171,7 +171,7 @@ export const fetchUserWishlist = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("Something is missing here.", 404));
   }
 
-  const wishlist = await Wishlist.find({ userId }).populate({
+  const wishlist = await Wishlist.findOne({ userId }).populate({
     path: "products",
     select: "title thumbnail price discount stock",
   });
@@ -179,7 +179,7 @@ export const fetchUserWishlist = TryCatch(async (req, res, next) => {
   return res.status(200).json({
     success: true,
     message: "User wishlist fetched.",
-    data: wishlist,
+    data: wishlist?.products || [],
   });
 });
 

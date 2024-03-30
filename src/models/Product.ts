@@ -11,8 +11,11 @@ interface ProductType extends Document {
   sold: number;
   thumbnail: string;
   images: string[];
-  category: "audio" | "audio and video" | "gadgets";
-  subCategory: "wired" | "wireless" | "analog" | "smart";
+  category: {
+    parent: string;
+    subParent: string;
+    child: string
+  };
   highlights?: string[];
   warranty?: {
     serviceType: string;
@@ -37,14 +40,9 @@ const productSchema: Schema<ProductType> = new Schema(
     thumbnail: { type: String, required: true },
     images: [{ type: String }],
     category: {
-      type: String,
-      required: true,
-      enum: ["audio", "audio and video", "gadgets"],
-    },
-    subCategory: {
-      type: String,
-      required: true,
-      enum: ["wired", "wireless", "analog", "smart"],
+      parent: {type: String, required: true},
+      subParent: {type: String, required: true},
+      child: {type: String, required: true},
     },
     highlights: [{ type: String }],
     warranty: {
@@ -52,7 +50,7 @@ const productSchema: Schema<ProductType> = new Schema(
       covered: { type: String, default: "NA" },
     },
     specifications: { type: Object },
-    importantNote: { type: String },
+    importantNote: { type: String }
   },
   {
     timestamps: true,

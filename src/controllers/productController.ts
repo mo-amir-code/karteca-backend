@@ -148,3 +148,13 @@ export const createProduct = TryCatch(async (req, res) => {
     message: "Product added.",
   });
 });
+
+export const searchProduct = TryCatch(async (req, res) => {
+  const {sort, category, discount, minvalue, maxvalue, rating, query} = req.query;
+  
+
+  return res.status(200).json({
+    success: true,
+    message: "Product added.",
+  });
+});
