@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import Product from "../models/Product.js"
 
 interface ProductType{
-  ownerId: string;
+  sellerId: string;
   title: string;
   description: object | string;
   price: number;
@@ -12,8 +12,10 @@ interface ProductType{
   sold: number;
   thumbnail: string;
   images: string[];
-  category: "audio" | "audio and video" | "gadgets";
-  subCategory: "wired" | "wireless" | "analog" | "smart";
+  category:{
+    parent: string,
+    child: string
+  } ;
   highlights?: string[];
   warranty?: {
     serviceType: string;
@@ -35,13 +37,40 @@ export const createProducts = async (count:number) => {
         "https://res.cloudinary.com/doidnfajd/image/upload/v1710499646/payKart/quaxu2lwp6ep4oeezw1y.png"
     ]
 
+    const categories = {
+        electronics: [
+            "smartwatch",
+            "smartphone",
+            "phone",
+            "refrigerator",
+            "laptop",
+            "tablet",
+            "gamesconsole",
+            "camera",
+            "drone"
+        ],
+        clothes: [
+            "tshirts",
+            "jeans",
+            "dresses",
+            "shirts",
+            "pants",
+            "jackets",
+            "shoes",
+            "underwear",
+            "socks"
+        ]
+
+    }
+
     const stocks = [0, 12, 9, 23, 5, 2];
-    const categories = ["audio", "audio and video", "gadgets"];
-    const subCategories = ["wired", "wireless", "analog", "smart"];
+
     
     for(let i = 0; i < count; i++){
+        const parentCat = faker.number.int(1) === 1? "electronics" : "clothes";
+
         const newProduct:ProductType = {
-            ownerId: "65ffd7527e7c1c0f1592a7f2",
+            sellerId: "65ffd7527e7c1c0f1592a7f2",
             title: faker.commerce.productName(),
             description: faker.commerce.productDescription(),
             price: faker.number.int({min: 799, max: 5000}),
@@ -51,8 +80,10 @@ export const createProducts = async (count:number) => {
             sold: faker.number.int(100),
             thumbnail: images[faker.number.int(5) || 0],
             images: images,
-            category: categories[faker.number.int({min:0, max:2})] as "audio" | "audio and video" | "gadgets",
-            subCategory: subCategories[faker.number.int({min:0, max:3})] as "wired" | "wireless" | "analog" | "smart",
+            category: {
+                parent: parentCat,
+                child: categories[parentCat][faker.number.int(8)]
+            },
             highlights: [
                 "Meet Galaxy S24 Ultra, the ultimate form of Galaxy Ultra with a new titanium exterior and a 17.25cm (6.8') flat display. It's an absolute marvel of design.",
                 "The legacy of Galaxy Note is alive and well. Write, tap and navigate with precision your fingers wish they had on the new, flat display.",

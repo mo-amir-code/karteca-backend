@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 interface ProductType extends Document {
-  ownerId: Schema.Types.ObjectId;
+  sellerId: Schema.Types.ObjectId;
   title: string;
   description: object;
   price: number;
@@ -13,7 +13,6 @@ interface ProductType extends Document {
   images: string[];
   category: {
     parent: string;
-    subParent: string;
     child: string
   };
   highlights?: string[];
@@ -29,9 +28,9 @@ interface ProductType extends Document {
 
 const productSchema: Schema<ProductType> = new Schema(
   {
-    ownerId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    sellerId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     title: { type: String, required: true },
-    description: { type: String || Object, required: true },
+    description: { type: Schema.Types.Mixed, required: true },
     price: { type: Number, required: true },
     stock: { type: Number, required: true },
     colors: [{ type: String }],
@@ -41,7 +40,6 @@ const productSchema: Schema<ProductType> = new Schema(
     images: [{ type: String }],
     category: {
       parent: {type: String, required: true},
-      subParent: {type: String, required: true},
       child: {type: String, required: true},
     },
     highlights: [{ type: String }],
