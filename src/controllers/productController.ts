@@ -193,7 +193,7 @@ export const searchProduct = TryCatch(async (req, res) => {
     }
   }
 
-  let totalItems = await Product.countDocuments(queryFilters).sort(sortQuery)
+  let totalItems = await Product.countDocuments(queryFilters).sort(sortQuery);
 
   let filteredProducts = await Product.find(queryFilters)
     .sort(sortQuery)
@@ -221,16 +221,21 @@ export const searchProduct = TryCatch(async (req, res) => {
     })
   );
 
-  if(rating){
-    filteredProducts = filteredProducts.filter((item) => item.ratingAndReviews.avgRating >= intRating);
-  }
+  if(rating) filteredProducts = filteredProducts.filter((item) => item.ratingAndReviews.avgRating >= intRating);
+
+  // if(query) filteredProducts = filteredProducts.filter((item) => {
+  //   const {title, description, category:{parent, child}, highlights, specifications} = item;
+  //   if(title.includes(query) || description.includes(query) || parent.includes(query) || child.includes(query) || highlights.includes(query)) return true;
+  //   return false;
+  // });
+
 
   return res.status(200).json({
     success: true,
     message: "Products filtered",
     data:{
       products: filteredProducts,
-      totalPage: Math.ceil(totalItems / intLimit)
+      totalPage: filteredProducts.length < 12? 1 : Math.ceil(totalItems / intLimit)
     }
   });
 });
