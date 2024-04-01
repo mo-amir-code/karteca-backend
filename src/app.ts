@@ -14,7 +14,7 @@ const corsOptions = {
     credentials: true, // Allow cookies
 };
 
-// createProducts(30)
+// createProducts(40)
 
 app.use(cookieParser());
 connectToMongo();
