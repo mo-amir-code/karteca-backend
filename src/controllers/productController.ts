@@ -242,6 +242,16 @@ export const searchProduct = TryCatch(async (req, res) => {
 
 export const getCategories = TryCatch(async (req, res, next) => {
 
+  const catchedCategories = await redis.get("productCategories");
+
+  if(catchedCategories){
+    return res.status(200).json({
+      success: true,
+      message: "Categories fetched",
+      data: JSON.parse(catchedCategories)
+    });
+  }
+
   let categories = await Product.find().select("category");
 
   categories = categories.map((item) => {
@@ -254,7 +264,9 @@ export const getCategories = TryCatch(async (req, res, next) => {
       name: cat.at(0)?.toUpperCase() + cat.slice(1),
       value: cat
     }
-  })
+  });
+
+  await redis.set("productCategories", JSON.stringify(filteredCategories));
 
   return res.status(200).json({
     success: true,
