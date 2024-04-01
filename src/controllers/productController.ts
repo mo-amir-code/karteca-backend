@@ -157,6 +157,7 @@ export const searchProduct = TryCatch(async (req, res) => {
   let intLimit = parseInt(limit);
   let intMinValue = parseInt(minvalue);
   let intMaxValue = parseInt(maxvalue);
+  let intRating = parseInt(rating);
 
   const childCategories = category?.split(",") || [];
   let queryDiscount = (discount?.split(",") || []).map(Number);
@@ -219,6 +220,10 @@ export const searchProduct = TryCatch(async (req, res) => {
       }
     })
   );
+
+  if(rating){
+    filteredProducts = filteredProducts.filter((item) => item.ratingAndReviews.avgRating >= intRating);
+  }
 
   return res.status(200).json({
     success: true,
