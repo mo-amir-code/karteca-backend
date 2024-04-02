@@ -182,12 +182,11 @@ export const createUserWishlistItems = TryCatch(async (req, res, next) => {
     wishlistItems.products.push(productId);
     await wishlistItems.save();
 
-    await redis.del(`userWishlist-${userId}`);
-
   }else{
     wishlistItems = await Wishlist.create({userId, products: [productId]});
   }
-
+  
+  await redis.del(`userWishlist-${userId}`);
 
   return res.status(200).json({
     success: true,
