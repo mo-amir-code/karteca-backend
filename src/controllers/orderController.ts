@@ -6,6 +6,7 @@ import Transaction from "../models/Transaction.js";
 import razorpayInstance from "../utils/razorpay.js";
 import User from "../models/User.js";
 import { redis } from "../utils/Redis.js";
+import Cart from "../models/Cart.js";
 
 export const fetchUserOrder = TryCatch(async (req, res, next) => {
   const { userId } = req.params;
@@ -100,6 +101,7 @@ export const createOrders = TryCatch(async (req, res, next) => {
   });
 
   await Order.create(newOrders);  
+  await Cart.deleteMany({userId})
   await redis.del(`userOrders-${userId}`);
   await redis.del(`userCartCounts-${userId}`);
 
