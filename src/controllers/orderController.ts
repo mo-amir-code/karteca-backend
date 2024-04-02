@@ -5,6 +5,7 @@ import ErrorHandler from "../utils/utility-class.js";
 import Transaction from "../models/Transaction.js";
 import razorpayInstance from "../utils/razorpay.js";
 import User from "../models/User.js";
+import { redis } from "../utils/Redis.js";
 
 export const fetchUserOrder = TryCatch(async (req, res, next) => {
   const { userId } = req.query;
@@ -13,17 +14,29 @@ export const fetchUserOrder = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("Something is missing here.", 404));
   }
 
+  const catchedOrders = await redis.get(`userOrders-${userId}`);
+
+  if(catchedOrders){
+    return res.status(200).json({
+      success: true,
+      message: "User orders fetched.",
+      data: JSON.parse(catchedOrders),
+    });
+  }
+
   const orders = await Order.find({ userId }).populate({
     path: "product",
     select: "title thumbnail",
   });
 
+  await redis.set(`userOrders-${userId}`, JSON.stringify(orders));
+
   return res.status(200).json({
     success: true,
     message: "User orders fetched.",
-    data: orders,
+    data: orders
   });
-});
+}); // redis done
 
 export const fetchUserOrderById = TryCatch(async (req, res, next) => {
   const { orderId } = req.params;
@@ -87,6 +100,7 @@ export const createOrders = TryCatch(async (req, res, next) => {
   });
 
   await Order.create(newOrders);  
+  await redis.del(`userOrders-${userId}`);
 
   const user = await User.findById(userId).select("name email phone");
 
@@ -116,4 +130,4 @@ export const createOrders = TryCatch(async (req, res, next) => {
       transactionId: newTransaction._id
     }
   });
-});
+}); // redis done

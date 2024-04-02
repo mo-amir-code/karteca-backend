@@ -273,4 +273,4 @@ export const getCategories = TryCatch(async (req, res, next) => {
     message: "Categories fetched",
     data: filteredCategories
   });
-});
+}); // redis done
