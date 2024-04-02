@@ -5,7 +5,7 @@ import { createOrders, fetchUserOrder, fetchUserOrderById } from "../controllers
 const router: Router = express.Router();
 
 router
-   .get("/", fetchUserOrder)
+   .get("/:userId", fetchUserOrder)
    .get("/:orderId", fetchUserOrderById)
    .post("/", createOrders)
 

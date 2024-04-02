@@ -8,7 +8,7 @@ import User from "../models/User.js";
 import { redis } from "../utils/Redis.js";
 
 export const fetchUserOrder = TryCatch(async (req, res, next) => {
-  const { userId } = req.query;
+  const { userId } = req.params;
 
   if (!userId) {
     return next(new ErrorHandler("Something is missing here.", 404));
@@ -26,7 +26,7 @@ export const fetchUserOrder = TryCatch(async (req, res, next) => {
 
   const orders = await Order.find({ userId }).populate({
     path: "product",
-    select: "title thumbnail",
+    select: "title thumbnail"
   });
 
   await redis.set(`userOrders-${userId}`, JSON.stringify(orders));
@@ -101,6 +101,7 @@ export const createOrders = TryCatch(async (req, res, next) => {
 
   await Order.create(newOrders);  
   await redis.del(`userOrders-${userId}`);
+  await redis.del(`userCartCounts-${userId}`);
 
   const user = await User.findById(userId).select("name email phone");
 
