@@ -104,6 +104,7 @@ export const createOrders = TryCatch(async (req, res, next) => {
   await Cart.deleteMany({userId})
   await redis.del(`userOrders-${userId}`);
   await redis.del(`userCartCounts-${userId}`);
+  await redis.del(`userCartItem-${userId}`);
 
   const user = await User.findById(userId).select("name email phone");
 
