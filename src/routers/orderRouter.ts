@@ -6,7 +6,7 @@ const router: Router = express.Router();
 
 router
    .get("/:userId", fetchUserOrder)
-   .get("/:orderId", fetchUserOrderById)
+   .get("/details/:orderId", fetchUserOrderById)
    .post("/", createOrders)
 
 export default router;

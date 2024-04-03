@@ -10,7 +10,7 @@ interface OrderType extends Document {
   deliveryStatus: "pending" | "dispatched" | "shipped" | "delivered";
   orderStatus: "successful" | "cancelled" | "processing";
   refund?: "cancelled" | "processing" | "success";
-  paymentMode: "card" | "upi" | "cash";
+  paymentMode: "online" | "cash";
   totalAmount: number;
   transaction: Schema.Types.ObjectId;
   createdAt: Date;

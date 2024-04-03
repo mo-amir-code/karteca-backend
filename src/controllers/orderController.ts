@@ -43,30 +43,45 @@ export const fetchUserOrderById = TryCatch(async (req, res, next) => {
   const { orderId } = req.params;
 
   if (!orderId) {
-    res.status(400).json({
+    return res.status(400).json({
       status: "failed",
       message: "Something missing.",
     });
-    return;
   }
 
-  const order = await Order.findById(orderId).populate([
+  const cachedOrderDetails = await redis.get(`userOrderDetails-${orderId}`);
+
+  if(cachedOrderDetails){
+    return res.status(200).json({
+      success: true,
+      message: "User order fetched.",
+      data: JSON.parse(cachedOrderDetails)
+    });
+  }
+
+  const order = await Order.findById(orderId).select(" -color -refund -userId -createdAt").populate([
     {
       path: "product",
-      select: "title thumbnail",
+      select: "_id title thumbnail description",
     },
     {
       path: "deliveryAddress",
-      select: "-userId",
+      select: "-_id -userId -country -type",
+    },
+    {
+      path: "transaction",
+      select: "status amount -_id",
     },
   ]);
+
+  await redis.set(`userOrderDetails-${orderId}`, JSON.stringify(order));
 
   return res.status(200).json({
     success: true,
     message: "User order fetched.",
     data: order,
   });
-});
+}); // redis done
 
 export const createOrders = TryCatch(async (req, res, next) => {
   const {orders, paymentMode, userId} = req.body as {paymentMode: "online" | "cash" , orders:[CPaymentOrderType], userId:string};
