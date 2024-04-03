@@ -21,8 +21,7 @@ import {
   fetchUserWishlistItems,
   createUserWishlistItems,
   deleteUserWishlistItems,
-  updateUserPassword,
-  userReferralEarning,
+  updateUserPassword
 } from "../controllers/userController.js";
 
 const router: Router = express.Router();
@@ -37,7 +36,6 @@ router
   .patch("/password", updateUserPassword)
   .get("/giftcards", fetchUserGiftCards)
   .post("/giftcards", addGiftCard) // TODO: Implementation is requried.
-  .get("/referral-earning/:userId", userReferralEarning)
   .get("/cards", fetchUserSavedCards)
   .post("/card", addUserCard)
   .get("/wallets", fetchUserWallets)

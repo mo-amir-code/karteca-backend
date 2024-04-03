@@ -480,20 +480,3 @@ export const updateUserPassword = TryCatch(async (req, res, next) => {
   });
   
 });
-
-export const userReferralEarning = TryCatch(async (req, res, next) => {
-  const { userId } = req.params as {userId: string};
-
-  if(!userId){
-    return next(new ErrorHandler("Something is missing", 404));
-  }
-
-  const user = await ReferMember.findOne({userId}).select("currentReferralEarning"); 
-  
-  return res.status(200).json({
-    success: true,
-    message: "Password changed",
-    data: user.currentReferralEarning
-  });
-  
-});
