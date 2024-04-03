@@ -9,6 +9,7 @@ import jwt from "jsonwebtoken";
 import { AuthSignupUserType } from "../types/user.js";
 import { TryCatch } from "../middlewares/error.js";
 import ErrorHandler from "../utils/utility-class.js";
+import ReferMember from "../models/ReferMember.js";
 
 export type MiddleRequestType = {
   userId: string;
@@ -48,6 +49,12 @@ export const signup = TryCatch(async (req, res, next) => {
   }
 
   const new_user = await User.create(newUser);
+  const referMemberData = {
+    userId: new_user._id,
+    referCode: newUser.referCode,
+    referredUserReferCode: newUser.referredUserReferCode || undefined
+  } 
+  await ReferMember.create(referMemberData);
   req.body.userId = new_user._id;
   next();
 });

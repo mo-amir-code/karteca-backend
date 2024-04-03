@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from "mongoose";
 interface ReferMemberType extends Document {
   userId: Schema.Types.ObjectId;
   withdrawalPermission: boolean;
-  referralEarning: number;
+  currentReferralEarning: number;
   totalReferralEarning: number;
   referredUserReferCode: string;
   referCode: string;
@@ -14,10 +14,10 @@ interface ReferMemberType extends Document {
 const referMemberSchema: Schema<ReferMemberType> = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   withdrawalPermission: { type: Boolean, default: false },
-  referralEarning: { type: Number, default: 0 },
+  currentReferralEarning: { type: Number, default: 0 },
   totalReferralEarning: { type: Number, default: 0 },
   referredUserReferCode: { type: String },
-  referCode: { type: String, required: true, unique: true },
+  referCode: { type: String, required: true, unique: true }
 }, {
     timestamps: true
 });

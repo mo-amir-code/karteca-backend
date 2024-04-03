@@ -454,13 +454,6 @@ export const updateUserPassword = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("Something is missing", 404));
   }
 
-  if(password === newPassword){
-    return res.status(401).json({
-      success: false,
-      message: "New password cannot same as old password"
-    });
-  }
-
   const user = await User.findById(userId);
   const isPasswordMatched = await bcrypt.compare(password, user.password);
 
@@ -471,12 +464,36 @@ export const updateUserPassword = TryCatch(async (req, res, next) => {
     });
   }
 
+  if(password === newPassword){
+    return res.status(401).json({
+      success: false,
+      message: "New password cannot same as old password"
+    });
+  }
+
   user.password = await bcrypt.hash(newPassword, parseInt(process.env.BCRYPT_SALT_ROUND!));
   await user.save();
   
   return res.status(200).json({
     success: true,
     message: "Password changed"
+  });
+  
+});
+
+export const userReferralEarning = TryCatch(async (req, res, next) => {
+  const { userId } = req.params as {userId: string};
+
+  if(!userId){
+    return next(new ErrorHandler("Something is missing", 404));
+  }
+
+  const user = await ReferMember.findOne({userId}).select("currentReferralEarning"); 
+  
+  return res.status(200).json({
+    success: true,
+    message: "Password changed",
+    data: user.currentReferralEarning
   });
   
 });
