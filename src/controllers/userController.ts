@@ -12,8 +12,9 @@ import Transaction from "../models/Transaction.js";
 import { getEarningLevelWise } from "../utils/services.js";
 import { TryCatch } from "../middlewares/error.js";
 import ErrorHandler from "../utils/utility-class.js";
-import { CGiftCardType, CRatingAndReviewsType, CUserCardType, CUserDeliveryAddressType, CWishlistType, UserEditType } from "../types/user.js";
+import { CGiftCardType, CRatingAndReviewsType, CUserCardType, CUserDeliveryAddressType, CWishlistType, UpdateUserPasswordType, UserEditType } from "../types/user.js";
 import { redis } from "../utils/Redis.js";
+import bcrypt from "bcrypt"
 
 export const fetchUserProfile = TryCatch(async (req, res, next) => {
   const { userId } = req.params;
@@ -444,4 +445,38 @@ export const addUserReview = TryCatch(async (req, res, next) => {
     success: true,
     message: "Your review added successfully."
   });
+});
+
+export const updateUserPassword = TryCatch(async (req, res, next) => {
+  const {userId, password, newPassword} = req.body as UpdateUserPasswordType;
+
+  if(!userId || !password || !newPassword){
+    return next(new ErrorHandler("Something is missing", 404));
+  }
+
+  if(password === newPassword){
+    return res.status(401).json({
+      success: false,
+      message: "New password cannot same as old password"
+    });
+  }
+
+  const user = await User.findById(userId);
+  const isPasswordMatched = await bcrypt.compare(password, user.password);
+
+  if(!isPasswordMatched){
+    return res.status(401).json({
+      success: false,
+      message: "Old Password is incorrect"
+    });
+  }
+
+  user.password = await bcrypt.hash(newPassword, parseInt(process.env.BCRYPT_SALT_ROUND!));
+  await user.save();
+  
+  return res.status(200).json({
+    success: true,
+    message: "Password changed"
+  });
+  
 });

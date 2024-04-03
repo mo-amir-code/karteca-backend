@@ -131,3 +131,9 @@ export interface UserEditType {
   phone?:string,
   gender?:"male" | "female" | "transgender",
 }
+
+export interface UpdateUserPasswordType{
+  userId:string;
+  password: string;
+  newPassword: string
+}

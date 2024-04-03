@@ -1,7 +1,6 @@
 import bcrypt from "bcrypt";
 import { AuthSignupUserType } from "../types/user.js";
 import crypto from "crypto";
-import axios from "axios";
 
 export const checkSignupItemsAndMakeStructured = async (
   body: AuthSignupUserType | null
