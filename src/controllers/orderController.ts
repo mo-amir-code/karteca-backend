@@ -121,6 +121,14 @@ export const createOrders = TryCatch(async (req, res, next) => {
   await redis.del(`userCartCounts-${userId}`);
   await redis.del(`userCartItem-${userId}`);
 
+  if(paymentMode === "cash"){
+    return res.status(200).json({
+      success: true,
+      message: "Order placed",
+      paymentMode: paymentMode
+    })
+  }
+
   const user = await User.findById(userId).select("name email phone");
 
   const paymentOrder = await razorpayInstance.orders.create({
@@ -131,7 +139,8 @@ export const createOrders = TryCatch(async (req, res, next) => {
 
   return res.status(200).json({
     success: true,
-    message: "Order created successfully.",
+    message: "Order placed",
+    paymentMode: paymentMode,
     data: {
       key: process.env.RAZORPAY_KEY_ID,
       name: process.env.COMPANY_NAME,
