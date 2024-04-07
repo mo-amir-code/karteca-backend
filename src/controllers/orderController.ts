@@ -3,10 +3,10 @@ import Order from "../models/Order.js";
 import { CPaymentOrderType, CTransactionType } from "../types/user.js";
 import ErrorHandler from "../utils/utility-class.js";
 import Transaction from "../models/Transaction.js";
-import razorpayInstance from "../utils/razorpay.js";
 import User from "../models/User.js";
 import { redis } from "../utils/Redis.js";
 import Cart from "../models/Cart.js";
+import { makePayment } from "../middlewares/payment.js";
 
 export const fetchUserOrder = TryCatch(async (req, res, next) => {
   const { userId } = req.params;
@@ -129,33 +129,14 @@ export const createOrders = TryCatch(async (req, res, next) => {
     })
   }
 
-  const user = await User.findById(userId).select("name email phone");
+  const {name, email, phone} = await User.findById(userId).select("name email phone");
 
-  const paymentOrder = await razorpayInstance.orders.create({
-    amount: totalAmount * 100,
-    currency: "INR",
-    receipt: newTransaction._id,
-  });
+  const data = await makePayment({totalAmount, transactionId: newTransaction._id, name, email, phone});
 
   return res.status(200).json({
     success: true,
     message: "Order placed",
     paymentMode: paymentMode,
-    data: {
-      key: process.env.RAZORPAY_KEY_ID,
-      name: process.env.COMPANY_NAME,
-      currency: "INR",
-      amount: totalAmount * 100,
-      orderId: paymentOrder.id,
-      prefill:{
-        name: user.name,
-        email: user.email,
-        contact: user.phone,
-      },
-      theme: {
-        color: process.env.PRIMARY_COLOR
-      },
-      transactionId: newTransaction._id
-    }
+    data
   });
 }); // redis done

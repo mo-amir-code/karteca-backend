@@ -1,7 +1,10 @@
 import { TryCatch } from "../middlewares/error.js";
+import { makePayment } from "../middlewares/payment.js";
 import ReferMember from "../models/ReferMember.js";
 import ReferralLevel, { ReferLevelUser } from "../models/ReferralLevel.js";
 import Transaction from "../models/Transaction.js";
+import User from "../models/User.js";
+import { CTransactionType } from "../types/user.js";
 import { redis } from "../utils/Redis.js";
 import ErrorHandler from "../utils/utility-class.js";
 
@@ -110,3 +113,27 @@ export const fetchUserDashboard = TryCatch(async (req, res, next) => {
     });
     
   }); // redis done
+
+export const addMoney = TryCatch(async (req, res, next) => {
+  const { amount, userId } = req.body;
+
+  const transactionData:CTransactionType = {
+    mode: "referral",
+    type: "credit",
+    amount,
+    userId
+  }
+
+  const newTransaction = await Transaction.create(transactionData);
+
+  const {email, phone, name} = await User.findById(userId);
+
+  const data = await makePayment({totalAmount:amount, transactionId: newTransaction._id, name, email, phone});
+
+  return res.status(200).json({
+    success: true,
+    message: "Add money order created",
+    data
+  })
+    
+}); 

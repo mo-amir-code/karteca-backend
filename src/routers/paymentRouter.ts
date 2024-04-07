@@ -6,5 +6,4 @@ const router: Router = express.Router()
 router
    .post("/verify", verifyPayment)
 
-
 export default router;
