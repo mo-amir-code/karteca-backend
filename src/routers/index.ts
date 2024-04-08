@@ -6,6 +6,7 @@ import cartRouter from "./cartRouter.js";
 import orderRouter from "./orderRouter.js";
 import paymentRouter from "./paymentRouter.js";
 import referRouter from "./referRouter.js";
+import notificationsRouter from "./notificationRouter.js";
 
 const router: Router = express.Router();
 
@@ -16,5 +17,6 @@ router.use("/cart", cartRouter);
 router.use("/order", orderRouter);
 router.use("/payment", paymentRouter);
 router.use("/refer", referRouter);
+router.use("/notification", notificationsRouter);
 
 export default router;

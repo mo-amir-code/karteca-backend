@@ -48,10 +48,7 @@ export const fetchUserDashboard = TryCatch(async (req, res, next) => {
     const levels = await ReferralLevel.find({userId}).select("-userId -_id -createdAt");
 
     if(!referUser){
-      return res.status(400).json({
-        success: false,
-        message: "Something went wrong"
-      });
+      return next(new ErrorHandler("Something went wrong", 400))
     }
 
     const {totalReferralEarning, currentReferralEarning, withdrawalPermission, referCode} = referUser;
@@ -136,10 +133,7 @@ export const fetchUserShortDashboard = TryCatch(async (req, res, next) => {
     const levels = await ReferralLevel.find({userId}).select("-userId -_id -createdAt");
 
     if(!referUser){
-      return res.status(400).json({
-        success: false,
-        message: "Something went wrong"
-      });
+      return next(new ErrorHandler("Something went wrong", 400));
     }
 
     const {totalReferralEarning, currentReferralEarning} = referUser;

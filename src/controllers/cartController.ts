@@ -106,10 +106,7 @@ export const createCart = TryCatch(async (req, res, next) => {
   const isAlreadyInCart = await Cart.findOne({$and: [{userId: userId}, {product: product}]});
   
   if(isAlreadyInCart){
-    return res.status(409).json({
-      success: false,
-      message: "Item already in cart",
-    });
+    return next(new ErrorHandler("Item is already in cart", 409));
   }
 
   await Cart.create(req.body);

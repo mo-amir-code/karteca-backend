@@ -9,6 +9,7 @@ import { calculateSHA256 } from "../utils/services.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { redis } from "../utils/Redis.js";
 import User from "../models/User.js";
+import Notification from "../models/Notification.js";
 
 export const verifyPayment = TryCatch(async (req, res, next) => {
     const {orderId, paymentId, signature, transactionId, isFrom} = req.body as VerifyPaymentBodyType;
@@ -74,6 +75,8 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
             }
             
             await redis.del(`userReferDashboard-${transaction.userId}`);
+            await Notification.create({userId:mainUserId, type: "payment", message: `Your withdrawal wallet is activated and ₹${transaction.amount} added as coin in Coin Wallet`});
+            await redis.del(`userNotifications-${mainUserId}`);
 
             return res.status(200).json({
                 success: true,
@@ -81,6 +84,9 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
             });
 
         }else await Cart.deleteMany({userId: transaction?.userId});
+
+        await Notification.create({ userId:mainUserId, type: "order", message: "Your items has been placed to deliver to you" });
+        await redis.del(`userNotifications-${mainUserId}`);
 
         return res.status(200).json({
             success: true,

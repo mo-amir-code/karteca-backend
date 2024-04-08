@@ -458,25 +458,26 @@ export const updateUserPassword = TryCatch(async (req, res, next) => {
   const isPasswordMatched = await bcrypt.compare(password, user.password);
 
   if(!isPasswordMatched){
-    return res.status(401).json({
-      success: false,
-      message: "Old Password is incorrect"
-    });
+    return next(new ErrorHandler("Old Password is incorrect", 401));
   }
 
   if(password === newPassword){
-    return res.status(401).json({
-      success: false,
-      message: "New password cannot same as old password"
-    });
+    return next(new ErrorHandler("Old Password is incorrect", 401));
   }
 
   user.password = await bcrypt.hash(newPassword, parseInt(process.env.BCRYPT_SALT_ROUND!));
   await user.save();
+
+  const ntfData = {
+    message: "Your password has been changed successfully",
+    type: "other",
+    userId
+  }
+  await Notification.create(ntfData);
+  await redis.del(`userNotifications-${userId}`);
   
   return res.status(200).json({
     success: true,
     message: "Password changed"
   });
-  
 });

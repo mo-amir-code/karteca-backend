@@ -18,7 +18,7 @@ const notificationSchema = new Schema<NotificationType>({
     enum: ["payment", "order", "offer", "other"],
   },
   isRead: { type: Boolean, default: false },
-});
+}, { timestamps: true });
 
 export default mongoose.models.Notification ||
   mongoose.model<NotificationType>("Notification", notificationSchema);

@@ -40,10 +40,7 @@ export const signup = TryCatch(async (req, res, next) => {
   if(newUser.referredUserReferCode){
     const isReferredUserReferCodeIsValid = await ReferMember.findOne({ referCode: newUser.referredUserReferCode });
     if(!isReferredUserReferCodeIsValid){
-      return res.status(404).json({
-        success: false,
-        message: "Referral code is incorrect"
-      })
+      return next(new ErrorHandler("Referral code is incorrect", 404));
     }
   }
     
@@ -142,10 +139,7 @@ export const verify = TryCatch(async (req, res, next) => {
     const { userId } = jwt.verify(token, jwtSecretKey) as { userId?: string };
 
     if(!userId){
-      return res.status(400).json({
-        success: false,
-        message: "Something went wrong with token",
-      }); 
+      return next(new ErrorHandler("Something went wrong with token", 400));
     }
 
     const user = await User.findById(userId);
