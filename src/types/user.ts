@@ -114,6 +114,10 @@ export interface CTransactionType{
   type: "withdrawal" | "credit" | "spend";
   mode: "referral" | "giftCard" | "shopping";
   transactionId?: string;
+  wallet?:{
+    name:string,
+    amount: number
+  };
   amount: number;
   bankDetails?: {
     name: string;

@@ -1,5 +1,7 @@
 import { TryCatch } from "../middlewares/error.js";
 import Cart from "../models/Cart.js";
+import ReferMember from "../models/ReferMember.js";
+import User from "../models/User.js";
 import { APICartType } from "../types/cart.js";
 import { redis } from "../utils/Redis.js";
 import ErrorHandler from "../utils/utility-class.js";
@@ -57,6 +59,39 @@ export const getCartCountByUserId = TryCatch(async (req, res, next) => {
   return res.status(200).json({
     success: true,
     data: totalItems,
+  });
+}); // redis done
+
+export const getWallets = TryCatch(async (req, res, next) => {
+  const { userId } = req.params;
+
+  if (!userId) {
+    return next(new ErrorHandler("UserId is not found.", 404));
+  }
+
+  const catchedCheckoutWallets = await redis.get(`userCheckoutWallets-${userId}`);
+
+  if(catchedCheckoutWallets){
+    return res.status(200).json({
+      success: true,
+      data: JSON.parse(catchedCheckoutWallets),
+    });
+  }
+
+  const user = await User.findById(userId);
+  const userReferMember = await ReferMember.findOne({ userId: userId });  
+
+  const data = {
+    mainBalance: user.mainBalance,
+    coinBalance: user.coinBalance,
+    currentReferralEarning: userReferMember.currentReferralEarning
+  }
+
+  await redis.set(`userCheckoutWallets-${userId}`, JSON.stringify(data));
+
+  return res.status(200).json({
+    success: true,
+    data: data
   });
 }); // redis done
 

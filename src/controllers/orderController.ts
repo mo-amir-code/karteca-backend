@@ -7,6 +7,7 @@ import User from "../models/User.js";
 import { redis } from "../utils/Redis.js";
 import Cart from "../models/Cart.js";
 import { makePayment } from "../middlewares/payment.js";
+import ReferMember from "../models/ReferMember.js";
 
 export const fetchUserOrder = TryCatch(async (req, res, next) => {
   const { userId } = req.params;
@@ -84,13 +85,13 @@ export const fetchUserOrderById = TryCatch(async (req, res, next) => {
 }); // redis done
 
 export const createOrders = TryCatch(async (req, res, next) => {
-  const {orders, paymentMode, userId} = req.body as {paymentMode: "online" | "cash" , orders:[CPaymentOrderType], userId:string};
+  const {orders, paymentMode, userId, wallet} = req.body as {paymentMode: "online" | "cash" , orders:[CPaymentOrderType], userId:string, wallet?:{name:string, amount:number}};
 
   if (!(orders.length > 0)) {
     return next(new ErrorHandler("Orders are missing.", 404));
   }
 
-  const totalAmount: number = orders.reduce(
+  let totalAmount: number = orders.reduce(
     (total: number, current: CPaymentOrderType) => {
       return total + current.totalAmount;
     },
@@ -102,6 +103,7 @@ export const createOrders = TryCatch(async (req, res, next) => {
     type: "spend",
     mode: "shopping",
     amount: totalAmount,
+    wallet
   };
 
   const newTransaction = await Transaction.create(txnData);
@@ -126,6 +128,41 @@ export const createOrders = TryCatch(async (req, res, next) => {
       success: true,
       message: "Order placed",
       paymentMode: paymentMode
+    })
+  }
+
+  if(wallet){
+    totalAmount -= wallet.amount;
+    
+    await redis.del(`userReferDashboard-${userId}`);
+    await redis.del(`userReferShortDashboard-${userId}`);
+    await redis.del(`userCheckoutWallets-${userId}`);
+
+    switch(wallet.name){
+      case "mainBalance":
+        const user = await User.findByIdAndUpdate(userId);
+        user.mainBalance -= wallet.amount;
+        await user.save();
+        break;
+      case "coinBalance":
+        const coinUser = await User.findByIdAndUpdate(userId);
+        coinUser.coinBalance -= coinUser.amount;
+        await coinUser.save();
+        break;
+      case "currentReferralEarning":
+        const referMember = await ReferMember.findOne({ userId:userId });
+        referMember.currentReferralEarning -= wallet.amount;
+        await referMember.save();
+        break;
+      default: null;
+    }
+  }
+
+  if(totalAmount === 0){
+    return res.status(200).json({
+      success: true,
+      message: "Order placed",
+      paymentMode: "wallet"
     })
   }
 
