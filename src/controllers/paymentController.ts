@@ -67,6 +67,7 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
                 }
 
                 await redis.del(`userReferDashboard-${currentReferMember.userId}`);
+                await redis.del(`userReferShortDashboard-${currentReferMember.userId}`);
 
                 level += 1;
                 currentReferMember = await ReferMember.findOne({ referCode: currentReferMember.referredUserReferCode });

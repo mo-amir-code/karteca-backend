@@ -4,6 +4,7 @@ import ReferMember from "../models/ReferMember.js";
 import ReferralLevel, { ReferLevelUser } from "../models/ReferralLevel.js";
 import Transaction from "../models/Transaction.js";
 import User from "../models/User.js";
+import { LevelEarningType } from "../types/refer.js";
 import { CTransactionType } from "../types/user.js";
 import { redis } from "../utils/Redis.js";
 import ErrorHandler from "../utils/utility-class.js";
@@ -53,7 +54,7 @@ export const fetchUserDashboard = TryCatch(async (req, res, next) => {
       });
     }
 
-    const {totalEarning, currentReferralEarning, withdrawalPermission, referCode} = referUser;
+    const {totalReferralEarning, currentReferralEarning, withdrawalPermission, referCode} = referUser;
 
     let levelsEarning = levels.map((lvl) => {
 
@@ -96,8 +97,8 @@ export const fetchUserDashboard = TryCatch(async (req, res, next) => {
   
     const resData = {
       currentEarning: currentReferralEarning,
-      totalEarning: totalEarning,
-      totalWithdrawal: (totalEarning - currentReferralEarning) || 0,
+      totalEarning: totalReferralEarning,
+      totalWithdrawal: (totalReferralEarning - currentReferralEarning) || 0,
       isWithdrawalPermission: withdrawalPermission,
       referCode,
       levelsEarning: levelsEarning,
@@ -105,6 +106,96 @@ export const fetchUserDashboard = TryCatch(async (req, res, next) => {
     }
 
     await redis.set(`userReferDashboard-${userId}`, JSON.stringify(resData));
+    
+    return res.status(200).json({
+      success: true,
+      message: "Dashboard fatched",
+      data: resData
+    });
+    
+  }); // redis done
+
+export const fetchUserShortDashboard = TryCatch(async (req, res, next) => {
+    const { userId } = req.params as {userId: string};
+  
+    if(!userId){
+      return next(new ErrorHandler("Something is missing", 404));
+    }
+
+    const catchedUserDashboard = await redis.get(`userReferShortDashboard-${userId}`);
+
+    if(catchedUserDashboard){
+      return res.status(200).json({
+        success: true,
+        message: "Dashboard fatched",
+        data: JSON.parse(catchedUserDashboard)
+      });
+    }
+
+    const referUser = await ReferMember.findOne({userId});
+    const levels = await ReferralLevel.find({userId}).select("-userId -_id -createdAt");
+
+    if(!referUser){
+      return res.status(400).json({
+        success: false,
+        message: "Something went wrong"
+      });
+    }
+
+    const {totalReferralEarning, currentReferralEarning} = referUser;
+
+    let levelsEarning = levels.map((lvl) => {
+
+      const withdrawalEnabledUsers = lvl.users.reduce((totalActive:number, current:ReferLevelUser) => {
+        if(current.isWithdrawalEnabled)
+          return totalActive + 1;
+        else
+          return totalActive
+      },  0);
+
+      const withdrawalDisabledUsers = lvl.users.length - withdrawalEnabledUsers;
+
+      const earnedMoney = lvl.users.reduce((total:number, current:ReferLevelUser) => {
+        if(current.isWithdrawalEnabled)
+          return total + current.earning;
+        else
+          return total;
+      },  0);
+
+      return {
+        level: lvl.level,
+        withdrawalDisabledUsers,
+        withdrawalEnabledUsers,
+        earning: earnedMoney
+      }
+
+    });
+
+    if(!levelsEarning.length){
+      levelsEarning = [{
+        level: 1,
+        withdrawalDisabledUsers: 0,
+        withdrawalEnabledUsers: 0,
+        earning: 0
+      }];
+    }
+
+    const totalActiveConnections = levelsEarning.reduce((total: number, current: LevelEarningType) => {
+      return total + current.withdrawalEnabledUsers;
+    }, 0);
+
+    const totalDeactiveConnections = levelsEarning.reduce((total: number, current: LevelEarningType) => {
+      return total + current.withdrawalDisabledUsers;
+    }, 0);
+  
+    const resData = {
+      totalEarning: totalReferralEarning,
+      totalWithdrawal: totalReferralEarning - currentReferralEarning,
+      totalActive: totalActiveConnections,
+      totalDeactive: totalDeactiveConnections
+    }
+
+    await redis.set(`userReferShortDashboard-${userId}`, JSON.stringify(resData));
     
     return res.status(200).json({
       success: true,
