@@ -92,7 +92,7 @@ export const fetchUserDashboard = TryCatch(async (req, res, next) => {
       }];
     }
 
-    const withdrawalHistory = await Transaction.find({$and: [{userId: userId, type: "withdrawal"}]}).select("_id amount status createdAt");
+    const withdrawalHistory = await Transaction.find({$and: [{userId: userId}, {"wallet.name": "currentReferralEarning"}]}).select("_id wallet status createdAt");
 
   
     const resData = {
