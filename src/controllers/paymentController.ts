@@ -53,7 +53,7 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
             let currentReferMember = await ReferMember.findOne({ referCode:currentReferMemberMainUser.referredUserReferCode });
 
             while(currentReferMember && level <= 7){
-                const earning = getLevelWiseMoney(level, transaction.amount);
+                let earning = Math.floor(getLevelWiseMoney(level, transaction.amount));
                 currentReferMember.currentReferralEarning += earning;
                 currentReferMember.totalReferralEarning += earning;
                 await currentReferMember.save();
@@ -63,7 +63,7 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
                     currentMemberLevel.users.push({earning:earning, isWithdrawalEnabled:true, user: mainUserId});
                     await currentMemberLevel.save();
                 }else {
-                    await ReferralLevel.create({ level:level, userId:currentReferMember.userId, users:[{ earning, isWithdrawalEnabled: true, user: mainUserId }] });
+                    await ReferralLevel.create({ level:level, userId:currentReferMember.userId, users:[{ earning:earning, isWithdrawalEnabled: true, user: mainUserId }] });
                 }
 
                 await redis.del(`userReferDashboard-${currentReferMember.userId}`);
