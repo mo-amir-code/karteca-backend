@@ -37,6 +37,16 @@ export const signup = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("Something went wrong!", 400));
   }
 
+  if(newUser.referredUserReferCode){
+    const isReferredUserReferCodeIsValid = await ReferMember.findOne({ referCode: newUser.referredUserReferCode });
+    if(!isReferredUserReferCodeIsValid){
+      return res.status(404).json({
+        success: false,
+        message: "Referral code is incorrect"
+      })
+    }
+  }
+    
   const { email } = newUser as AuthSignupUserType;
 
   const user: UserType | null = await User.findOne({ email });

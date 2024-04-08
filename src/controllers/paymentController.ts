@@ -26,7 +26,7 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
     const transaction = await Transaction.findByIdAndUpdate(transactionId, { status: "processing" });
     
     if(isAutheticated && transaction){
-        const mainUserId = transaction.userId;
+        const mainUserId = new Types.ObjectId(transaction.userId.toString());
 
         // updating user transaction from procssing to success
         transaction.status = "success";
@@ -39,56 +39,44 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
 
         if(isFrom === "refer"){
             let level = 1;
-            // fecthing user from refer memeber schema
-            let user = await ReferMember.findOne({ userId: mainUserId });
-            user.withdrawalPermission = true;
-            await user.save();
+            const currentReferMemberMainUser = await ReferMember.findOne({ userId: mainUserId });
+            currentReferMemberMainUser.withdrawalPermission = true;
 
-            while(user?.referredUserReferCode){
-                const referCode = user.referredUserReferCode;
+            const mainUserInfo = await User.findById(currentReferMemberMainUser.userId);
+            mainUserInfo.coinBalance += transaction.amount;
+
+            await currentReferMemberMainUser.save();
+            await mainUserInfo.save();
+
+
+
+            let currentReferMember = await ReferMember.findOne({ referCode:currentReferMemberMainUser.referredUserReferCode });
+
+            while(currentReferMember && level <= 7){
                 const earning = getLevelWiseMoney(level, transaction.amount);
-                if(level <= 7){
-                    // UPdating level wise bottom to top referral earning
-                    const currentUser = await ReferMember.findOne({ referredUserReferCode:referCode });
-                    currentUser.currentReferralEarning += earning;
-                    currentUser.totalReferralEarning += earning;
-                    await currentUser.save();
-                    // End with update
+                currentReferMember.currentReferralEarning += earning;
+                currentReferMember.totalReferralEarning += earning;
+                await currentReferMember.save();
 
-                    // updating current user level
-                    const currentReferralUser = await ReferralLevel.findOneAndUpdate({ level, userId:currentUser.userId });
-                    if(currentReferralUser){
-                        const index = currentReferralUser.users.findIndex((item) => item.user.equals(mainUserId.toString()));
-                        const currentUser = currentReferralUser.users.find((item) => item.user.equals(mainUserId.toString()));
-                        if(index !== -1 && currentUser){
-                            currentUser.earning += earning;
-                            currentUser.isWithdrawalEnabled = true;
-                            currentReferralUser.users[index] = currentUser;
-                            await currentReferralUser.save();
-                        }
-                        // else{
-                        //     currentReferralUser.users.push({ user: mainUserId, isWithdrawalEnabled: true, earning });
-                        //     await currentReferralUser.save();
-                        // }
-                    }else{
-                        await ReferralLevel.create({ level, userId: currentUser.userId, users: [{ earning, isWithdrawalEnabled: true, user: mainUserId }] })
-                    }
+                const currentMemberLevel = await ReferralLevel.findOne({ level: level, userId: currentReferMember.userId });
+                if(currentMemberLevel){                    
+                    currentMemberLevel.users.push({earning:earning, isWithdrawalEnabled:true, user: mainUserId});
+                    await currentMemberLevel.save();
+                }else {
+                    await ReferralLevel.create({ level:level, userId:currentReferMember.userId, users:[{ earning, isWithdrawalEnabled: true, user: mainUserId }] });
+                }
 
-                    // fetching parent connection of current user and assigning in user
-                    user = await ReferMember.findOne({referredUserReferCode:currentUser.referredUserReferCode});
-                    level++;
-                }else user = undefined;
+                await redis.del(`userReferDashboard-${currentReferMember.userId}`);
+
+                level += 1;
+                currentReferMember = await ReferMember.findOne({ referCode: currentReferMember.referredUserReferCode });
             }
-
-            const mainUser = await User.findById(mainUserId);
-            mainUser.coinBalance += transaction.amount;
-            await mainUser.save();
-
-            await redis.del(`userReferDashboard-${mainUserId}`);
+            
+            await redis.del(`userReferDashboard-${transaction.userId}`);
 
             return res.status(200).json({
                 success: true,
-                message: "Money added successfully"
+                message: "Withdrawal activated"
             });
 
         }else await Cart.deleteMany({userId: transaction?.userId});

@@ -70,7 +70,7 @@ export const createProducts = async (count:number) => {
         const parentCat = faker.number.int(1) === 1? "electronics" : "clothes";
 
         const newProduct:ProductType = {
-            sellerId: "660fd6b412bde3010f21b114",
+            sellerId: "6613902fdc132accee76b20c",
             title: faker.commerce.productName(),
             description: faker.commerce.productDescription(),
             price: faker.number.int({min: 799, max: 5000}),
