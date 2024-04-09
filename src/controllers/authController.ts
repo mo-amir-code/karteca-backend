@@ -156,7 +156,7 @@ export const verify = TryCatch(async (req, res, next) => {
     const sessionToken = jwt.sign({ userId }, jwtSecretKey);
 
     res.cookie("sessiontoken", sessionToken, {
-      maxAge: Date.now() + 4 * 24 * 60 * 60 * 1000, // 4 days
+      maxAge: 4 * 24 * 60 * 60 * 1000, // 4 days
       domain: process.env.ROOT_DOMAIN, // Set to the root domain
       secure: true, // Ensure the cookie is sent only over HTTPS
       httpOnly: true,  // Makes the cookie accessible only via HTTP(S) requests, not JavaScript 
@@ -225,7 +225,7 @@ export const signin = TryCatch(async (req, res, next) => {
 
 
     res.cookie("sessiontoken", sessionToken, {
-      maxAge: Date.now() + 4 * 24 * 60 * 60 * 1000, // 4 days
+      maxAge: 4 * 24 * 60 * 60 * 1000, // 4 days
       domain: process.env.ROOT_DOMAIN, // Set to the root domain
       secure: true, // Ensure the cookie is sent only over HTTPS
       httpOnly: true,  // Makes the cookie accessible only via HTTP(S) requests, not JavaScript 

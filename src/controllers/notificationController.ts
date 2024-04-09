@@ -40,3 +40,23 @@ export const getUserNotifications = TryCatch(async (req, res, next) => {
         data
     })
 });
+
+export const readUserNotifications = TryCatch(async (req, res, next) => {
+    const {userId} = req.params;
+
+    if(!userId){
+        return next(new ErrorHandler("User ID not found", 404));
+    }
+
+    await Notification.updateMany(
+        { userId: userId, isRead: false },
+        { $set: { isRead: true } }
+    );
+    
+    await redis.del(`userNotifications-${userId}`);
+
+    return res.status(200).json({
+        success: true,
+        message: "Notifications read",
+    })
+});
