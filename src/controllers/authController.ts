@@ -104,12 +104,12 @@ export const sendOTP = TryCatch(async (req, res, next) => {
   const otpHash: string = await bcrypt.hash(otp.toString(), saltRound);
 
   user.otp = otpHash;
-  user.otpExpiry = Date.now() + 15 * 60 * 1000;
+  user.otpExpiry =  15 * 60 * 1000;
   user.otpToken = otpToken;
   await user.save();
 
   res.cookie("otptoken", otpToken, {
-    maxAge: Date.now() + 15 * 60 * 1000, // 15 minutes
+    maxAge:  15 * 60 * 1000, // 15 minutes
     domain: process.env.ROOT_DOMAIN, // Set to the root domain
     secure: true, // Ensure the cookie is sent only over HTTPS
     httpOnly: true,  // Makes the cookie accessible only via HTTP(S) requests, not JavaScript 
