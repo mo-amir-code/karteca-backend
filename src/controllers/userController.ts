@@ -462,7 +462,7 @@ export const updateUserPassword = TryCatch(async (req, res, next) => {
   }
 
   if(password === newPassword){
-    return next(new ErrorHandler("Old Password is incorrect", 401));
+    return next(new ErrorHandler("New password must be different", 401));
   }
 
   user.password = await bcrypt.hash(newPassword, parseInt(process.env.BCRYPT_SALT_ROUND!));

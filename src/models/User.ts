@@ -40,7 +40,7 @@ const userSchema: Schema<UserType> = new Schema<UserType>(
       enum: ["customer", "seller", "admin"],
     },
     password: { type: String, required: true },
-    phone: { type: String, unique: true },
+    phone: { type: String },
     verified: { type: Boolean, default: false },
     currency: { type: String, default: "inr", enum: ["inr", "usd"] },
     address: {
