@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from "mongoose";
 interface NotificationType extends Document {
   userId: Schema.Types.ObjectId;
   message: string;
-  type: "payment" | "order" | "offer" | "other";
+  type: "payment" | "order" | "offer" | "other" | "referral";
   isRead: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -15,7 +15,7 @@ const notificationSchema = new Schema<NotificationType>({
   type: {
     type: String,
     required: true,
-    enum: ["payment", "order", "offer", "other"],
+    enum: ["payment", "order", "offer", "referral", "other"],
   },
   isRead: { type: Boolean, default: false },
 }, { timestamps: true });

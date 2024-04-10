@@ -12,109 +12,154 @@ import User from "../models/User.js";
 import Notification from "../models/Notification.js";
 
 export const verifyPayment = TryCatch(async (req, res, next) => {
-    const {orderId, paymentId, signature, transactionId, isFrom} = req.body as VerifyPaymentBodyType;
+  const { orderId, paymentId, signature, transactionId, isFrom } =
+    req.body as VerifyPaymentBodyType;
 
-    if(!orderId || !paymentId || !signature || !transactionId){
-        return next(new ErrorHandler("Something is missing", 404));
-    }
+  if (!orderId || !paymentId || !signature || !transactionId) {
+    return next(new ErrorHandler("Something is missing", 404));
+  }
 
-    const token = orderId + "|" + paymentId;
+  const token = orderId + "|" + paymentId;
 
-    const expectedSignature = calculateSHA256(token.toString());
-    const isAutheticated = expectedSignature == signature;
+  const expectedSignature = calculateSHA256(token.toString());
+  const isAutheticated = expectedSignature == signature;
 
-    // updating user transaction
-    const transaction = await Transaction.findByIdAndUpdate(transactionId, { status: "processing" });
-    
-    if(isAutheticated && transaction){
-        const mainUserId = new Types.ObjectId(transaction.userId.toString());
+  // updating user transaction
+  const transaction = await Transaction.findByIdAndUpdate(transactionId, {
+    status: "processing",
+  });
 
-        // updating user transaction from procssing to success
-        transaction.status = "success";
-        transaction.paymentId = paymentId;
-        transaction.paymentOrderId = orderId;
-        transaction.paymentSignature = signature;
-        await transaction.save();
-        // ENd with update
-        
+  if (isAutheticated && transaction) {
+    const mainUserId = new Types.ObjectId(transaction.userId.toString());
 
-        if(isFrom === "refer"){
-            let level = 1;
-            const currentReferMemberMainUser = await ReferMember.findOne({ userId: mainUserId });
-            currentReferMemberMainUser.withdrawalPermission = true;
+    // updating user transaction from procssing to success
+    transaction.status = "success";
+    transaction.paymentId = paymentId;
+    transaction.paymentOrderId = orderId;
+    transaction.paymentSignature = signature;
+    await transaction.save();
+    // ENd with update
 
-            const mainUserInfo = await User.findById(currentReferMemberMainUser.userId);
-            mainUserInfo.coinBalance += transaction.amount;
+    if (isFrom === "refer") {
+      let level = 1;
+      const currentReferMemberMainUser = await ReferMember.findOne({userId: mainUserId});
+      currentReferMemberMainUser.withdrawalPermission = true;
 
-            await currentReferMemberMainUser.save();
-            await mainUserInfo.save();
+      const mainUserInfo = await User.findById(mainUserId);
+      mainUserInfo.coinBalance += transaction.amount;
 
+      await currentReferMemberMainUser.save();
+      await mainUserInfo.save();
 
+      let currentReferMember = await ReferMember.findOne({referCode: currentReferMemberMainUser.referredUserReferCode});
 
-            let currentReferMember = await ReferMember.findOne({ referCode:currentReferMemberMainUser.referredUserReferCode });
+      while (currentReferMember && level <= 7) {
+        let earning = Math.floor(getLevelWiseMoney(level, transaction.amount));
+        currentReferMember.currentReferralEarning += earning;
+        currentReferMember.totalReferralEarning += earning;
+        await currentReferMember.save();
 
-            while(currentReferMember && level <= 7){
-                let earning = Math.floor(getLevelWiseMoney(level, transaction.amount));
-                currentReferMember.currentReferralEarning += earning;
-                currentReferMember.totalReferralEarning += earning;
-                await currentReferMember.save();
+        const currentMemberLevel = await ReferralLevel.findOne({level: level, userId: currentReferMember.userId});
+        if (currentMemberLevel) {
+          currentMemberLevel.users.push({earning: earning, isWithdrawalEnabled: true, user: mainUserId,});
+          await currentMemberLevel.save();
+        } else {
+          await ReferralLevel.create({level: level, userId: currentReferMember.userId, users: [{ earning: earning, isWithdrawalEnabled: true, user: mainUserId }] });
+        }
 
-                const currentMemberLevel = await ReferralLevel.findOne({ level: level, userId: currentReferMember.userId });
-                if(currentMemberLevel){                    
-                    currentMemberLevel.users.push({earning:earning, isWithdrawalEnabled:true, user: mainUserId});
-                    await currentMemberLevel.save();
-                }else {
-                    await ReferralLevel.create({ level:level, userId:currentReferMember.userId, users:[{ earning:earning, isWithdrawalEnabled: true, user: mainUserId }] });
-                }
-
-                await redis.del(`userReferDashboard-${currentReferMember.userId}`);
-                await redis.del(`userReferShortDashboard-${currentReferMember.userId}`);
-
-                level += 1;
-                currentReferMember = await ReferMember.findOne({ referCode: currentReferMember.referredUserReferCode });
-            }
-            
-            await redis.del(`userReferDashboard-${transaction.userId}`);
-            await Notification.create({userId:mainUserId, type: "payment", message: `Your withdrawal wallet is activated and ₹${transaction.amount} added as coin in Coin Wallet`});
-            await redis.del(`userNotifications-${mainUserId}`);
-
-            return res.status(200).json({
-                success: true,
-                message: "Withdrawal activated"
-            });
-
-        }else await Cart.deleteMany({userId: transaction?.userId});
-
-        await Notification.create({ userId:mainUserId, type: "order", message: "Your items has been placed to deliver to you" });
-        await redis.del(`userNotifications-${mainUserId}`);
-
-        return res.status(200).json({
-            success: true,
-            message: "Payment recieved."
+        await Notification.create({
+            userId: currentReferMember.userId,
+            type: "referral",
+            message: `Congratulations! You got ${earning} rupee(s) of referral earning of level ${level}`,
         });
-    }
 
-    next(new ErrorHandler("Something went wrong", 400));
+
+        await redis.del(`userReferDashboard-${currentReferMember.userId}`);
+        await redis.del(`userReferShortDashboard-${currentReferMember.userId}`);
+        await redis.del(`userCheckoutWallets-${currentReferMember.userId}`);
+
+        level += 1;
+        if(currentReferMember.referredUserReferCode) currentReferMember = await ReferMember.findOne({referCode: currentReferMember.referredUserReferCode});
+        else currentReferMember = null;
+      }
+
+      await redis.del(`userReferDashboard-${mainUserId}`);
+
+      await Notification.create({
+        userId: mainUserId,
+        type: "payment",
+        message: `Your withdrawal wallet is activated and ₹${transaction.amount} added as coin in Coin Wallet`,
+      });
+      await redis.del(`userNotifications-${mainUserId}`);
+
+      const wallet = transaction?.wallet as | { name: string; amount: number } | undefined;
+
+      if (wallet) {
+        await redis.del(`userReferShortDashboard-${mainUserId}`);
+        await redis.del(`userCheckoutWallets-${mainUserId}`);
+
+        switch (wallet?.name) {
+          case "mainBalance":
+            const user = await User.findById(mainUserId);
+            user.mainBalance -= wallet?.amount;
+            await user.save();
+            break;
+          case "coinBalance":
+            const coinUser = await User.findById(mainUserId);
+            coinUser.coinBalance -= wallet?.amount;
+            await coinUser.save();
+            break;
+          case "currentReferralEarning":
+            const referMember = await ReferMember.findOne({
+              userId: mainUserId,
+            });
+            referMember.currentReferralEarning -= wallet?.amount;
+            await referMember.save();
+            break;
+          default:
+            null;
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Withdrawal activated",
+      });
+    } else await Cart.deleteMany({ userId: transaction?.userId });
+
+    await Notification.create({
+      userId: mainUserId,
+      type: "order",
+      message: "Your items has been placed to deliver to you",
+    });
+    await redis.del(`userNotifications-${mainUserId}`);
+
+    return res.status(200).json({
+      success: true,
+      message: "Payment recieved.",
+    });
+  }
+
+  next(new ErrorHandler("Something went wrong", 400));
 });
 
-const getLevelWiseMoney = (level:number, amount:number) => {
-    switch(level){
-        case 1:
-            return amount * 0.30;
-        case 2:
-            return amount * 0.15;
-        case 3:
-            return amount * 0.07;
-        case 4:
-            return amount * 0.04;
-        case 5:
-            return amount * 0.02;
-        case 6:
-            return amount * 0.01;
-        case 7:
-            return amount * 0.01;
-        default: 
-        return 0
-    }
-
-}
+const getLevelWiseMoney = (level: number, amount: number) => {
+  switch (level) {
+    case 1:
+      return amount * 0.3;
+    case 2:
+      return amount * 0.15;
+    case 3:
+      return amount * 0.07;
+    case 4:
+      return amount * 0.04;
+    case 5:
+      return amount * 0.02;
+    case 6:
+      return amount * 0.01;
+    case 7:
+      return amount * 0.01;
+    default:
+      return 0;
+  }
+};

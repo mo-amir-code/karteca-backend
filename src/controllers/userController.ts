@@ -93,7 +93,7 @@ export const addUserAddress = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("Something is missing in the address.", 404));
   }
 
-  await DeliveryAddress.create(address);
+  await DeliveryAddress.create({...address, type: address.type.toLowerCase()});
 
   await redis.del(`userAddresses-${address.userId}`);
 

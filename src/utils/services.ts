@@ -9,7 +9,7 @@ export const checkSignupItemsAndMakeStructured = async (
     throw new Error("Request body is missing.");
   }
 
-  const { name, email, gender, password, address, phone } = body;
+  const { name, email, gender, password, address, phone, referredUserReferCode } = body;
 
   if (!name || !password || !email || !gender || !address) {
     throw new Error("Required fields are missing in the sign up form.");
@@ -24,7 +24,9 @@ export const checkSignupItemsAndMakeStructured = async (
   const result: AuthSignupUserType = {
     ...body,
     password: hashedPassword,
-    referCode,
+    gender: gender.toLowerCase() as "male" | "female" | "transgender",
+    referredUserReferCode: referredUserReferCode?.toUpperCase() || undefined,
+    referCode
   };
 
   return result;

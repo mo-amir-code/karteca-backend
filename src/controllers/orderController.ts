@@ -91,6 +91,8 @@ export const createOrders = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("Orders are missing.", 404));
   }
 
+  console.log(wallet)
+
   let totalAmount: number = orders.reduce(
     (total: number, current: CPaymentOrderType) => {
       return total + current.totalAmount;
@@ -131,32 +133,7 @@ export const createOrders = TryCatch(async (req, res, next) => {
     })
   }
 
-  if(wallet){
-    totalAmount -= wallet.amount;
-    
-    await redis.del(`userReferDashboard-${userId}`);
-    await redis.del(`userReferShortDashboard-${userId}`);
-    await redis.del(`userCheckoutWallets-${userId}`);
-
-    switch(wallet.name){
-      case "mainBalance":
-        const user = await User.findByIdAndUpdate(userId);
-        user.mainBalance -= wallet.amount;
-        await user.save();
-        break;
-      case "coinBalance":
-        const coinUser = await User.findByIdAndUpdate(userId);
-        coinUser.coinBalance -= coinUser.amount;
-        await coinUser.save();
-        break;
-      case "currentReferralEarning":
-        const referMember = await ReferMember.findOne({ userId:userId });
-        referMember.currentReferralEarning -= wallet.amount;
-        await referMember.save();
-        break;
-      default: null;
-    }
-  }
+  if(wallet) totalAmount -= wallet.amount;
 
   if(totalAmount === 0){
     return res.status(200).json({

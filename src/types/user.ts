@@ -42,6 +42,7 @@ export interface CUserDeliveryAddressType{
   city: string;
   postalCode: number;
   phone: number;
+  type: string
 }
 
 export interface CGiftCardType{
