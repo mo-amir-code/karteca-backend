@@ -1,5 +1,6 @@
 import { faker } from "@faker-js/faker";
 import Product from "../models/Product.js"
+import CategoriesWithImage from "../models/CategoriesWithImage.js";
 
 interface ProductType{
   sellerId: string;
@@ -25,6 +26,32 @@ interface ProductType{
   importantNote?: string;
 }
 
+const categories = {
+    electronics: [
+        "smartwatch",
+        "smartphone",
+        "phone",
+        "refrigerator",
+        "laptop",
+        "tablet",
+        "gamesconsole",
+        "camera",
+        "drone"
+    ],
+    clothes: [
+        "tshirts",
+        "jeans",
+        "dresses",
+        "shirts",
+        "pants",
+        "jackets",
+        "shoes",
+        "underwear",
+        "socks"
+    ]
+
+}
+
 export const createProducts = async (count:number) => {
     let products:ProductType[] = [];
 
@@ -36,32 +63,6 @@ export const createProducts = async (count:number) => {
         "https://res.cloudinary.com/doidnfajd/image/upload/v1710499647/payKart/g3prbai8ntnzxxybsl2a.png",
         "https://res.cloudinary.com/doidnfajd/image/upload/v1710499646/payKart/quaxu2lwp6ep4oeezw1y.png"
     ]
-
-    const categories = {
-        electronics: [
-            "smartwatch",
-            "smartphone",
-            "phone",
-            "refrigerator",
-            "laptop",
-            "tablet",
-            "gamesconsole",
-            "camera",
-            "drone"
-        ],
-        clothes: [
-            "tshirts",
-            "jeans",
-            "dresses",
-            "shirts",
-            "pants",
-            "jackets",
-            "shoes",
-            "underwear",
-            "socks"
-        ]
-
-    }
 
     const stocks = [0, 12, 9, 23, 5, 2];
 
@@ -111,4 +112,46 @@ export const createProducts = async (count:number) => {
     Product.create(products).then(() => {
         console.log("Product Created")
     });
+}
+
+export const createCategoriesWithImage = async () => {
+    const images = [
+        {
+            parent:"smartwatch",
+            parentImage: "https://res.cloudinary.com/doidnfajd/image/upload/v1712744946/categories/rsp9wilxqwnfajkg4yco.png"
+        },
+        {
+            parent:"smartphone",
+            parentImage: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746703/categories/dj7ekkki5yat78ok1nhx.png"
+        },
+        {
+            parent:"phone",
+            parentImage: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746703/categories/dj7ekkki5yat78ok1nhx.png"
+        },
+        {
+            parent:"refrigerator",
+            parentImage: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746705/categories/nb9h3uajuxjzvhgp1yop.png"
+        },
+        {
+            parent:"laptop",
+            parentImage: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746704/categories/avzfverw8y9rj0reztxq.png"
+        },
+        {
+            parent:"tablet",
+            parentImage: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746703/categories/tcsybxadzqk1opqrf4ju.png"
+        },
+        {
+            parent:"gamesconsole",
+            parentImage: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746705/categories/xw4ejenjmwucxfp7vbpt.png"
+        },
+        {
+            parent:"camera",
+            parentImage: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746704/categories/wjciswzj0vivr5b2fosn.png"
+        },
+        {
+            parent:"drone",
+            parentImage: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746704/categories/olgsju9cespaagm07dzn.png"
+        },
+    ]
+    await CategoriesWithImage.create({categories:images}).then(()=>console.log("Categories created")).catch(() => console.log("Error while creating categories"));
 }

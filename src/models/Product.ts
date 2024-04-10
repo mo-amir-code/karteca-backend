@@ -40,7 +40,7 @@ const productSchema: Schema<ProductType> = new Schema(
     images: [{ type: String }],
     category: {
       parent: {type: String, required: true},
-      child: {type: String, required: true},
+      child: {type: String, required: true}
     },
     highlights: [{ type: String }],
     warranty: {

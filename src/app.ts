@@ -5,7 +5,7 @@ import { connectToMongo } from "./utils/mongoDB.js";
 import { errorHandler } from "./middlewares/error.js";
 import morgan from "morgan";
 import cors from "cors"
-import { createProducts } from "./utils/createProducts.js";
+import { createCategoriesWithImage, createProducts } from "./utils/createProducts.js";
 
 const app: Express = express();
 
@@ -15,6 +15,7 @@ const corsOptions = {
 };
 
 // createProducts(40)
+// createCategoriesWithImage();
 
 app.use(cookieParser());
 connectToMongo();

@@ -7,6 +7,8 @@ import { CProductType } from "../types/user.js";
 import { redis } from "../utils/Redis.js";
 import { calculateRatingAndReviews } from "../utils/services.js";
 import { FilterProductType } from "../types/searchType.js";
+import CategoriesWithImage from "../models/CategoriesWithImage.js";
+import { CategoryWithImageType } from "../types/product.js";
 
 export const getTopProducts = TryCatch(async (req, res) => {
   const cathedData = await redis.get("topProducts");
@@ -243,7 +245,8 @@ export const searchProduct = TryCatch(async (req, res) => {
     message: "Products filtered",
     data:{
       products: filteredProducts,
-      totalPage: filteredProducts.length < 12? 1 : Math.ceil(totalItems / intLimit)
+      totalPage: filteredProducts.length < 12? 1 : Math.ceil(totalItems / intLimit),
+      totalResults: totalItems
     }
   });
 });
@@ -280,5 +283,34 @@ export const getCategories = TryCatch(async (req, res, next) => {
     success: true,
     message: "Categories fetched",
     data: filteredCategories
+  });
+}); // redis done
+
+export const getCategoriesWithImage = TryCatch(async (req, res, next) => {
+
+  const catchedCategories = await redis.get("productCategoriesWithImage");
+
+  if(catchedCategories){
+    return res.status(200).json({
+      success: true,
+      message: "Categories fetched",
+      data: JSON.parse(catchedCategories)
+    });
+  }
+
+  let categories = await CategoriesWithImage.find();
+  categories = (categories[0]?.categories || []).map((item:CategoryWithImageType) => {
+    return {
+      name: item.parent.at(0)?.toUpperCase() + item.parent.slice(1),
+      image: item.parentImage
+    }
+  }).slice(0, 6);
+
+  await redis.set("productCategoriesWithImage", JSON.stringify(categories));
+
+  return res.status(200).json({
+    success: true,
+    message: "Categories fetched",
+    data: categories
   });
 }); // redis done
