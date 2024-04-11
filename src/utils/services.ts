@@ -25,9 +25,9 @@ export const checkSignupItemsAndMakeStructured = async (
   const referCode = generateReferCode(phone?.toString() || email);
 
   if(referredUserReferCode){
-    const user = await ReferMember.findOne({ referCode: referredUserReferCode });
+    const user = await ReferMember.findOne({ referCode: referredUserReferCode.toUpperCase() });
     await redis.del(`userReferShortDashboard-${user.userId}`);
-    await redis.get(`userReferDashboard-${user.userId}`);
+    await redis.del(`userReferDashboard-${user.userId}`);
   }
 
 
