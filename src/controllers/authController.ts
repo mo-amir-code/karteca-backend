@@ -10,6 +10,8 @@ import { AuthSignupUserType } from "../types/user.js";
 import { TryCatch } from "../middlewares/error.js";
 import ErrorHandler from "../utils/utility-class.js";
 import ReferMember from "../models/ReferMember.js";
+import { redis } from "../utils/Redis.js";
+import ReferralLevelModel from "../models/ReferralLevel.js";
 
 export type MiddleRequestType = {
   userId: string;
@@ -61,8 +63,26 @@ export const signup = TryCatch(async (req, res, next) => {
     referCode: newUser.referCode,
     referredUserReferCode: newUser.referredUserReferCode || undefined
   } 
-  await ReferMember.create(referMemberData);
+  const newReferUser = await ReferMember.create(referMemberData);
   req.body.userId = new_user._id;
+
+  if(newReferUser.referredUserReferCode){
+    let level = 1;
+    let referredMember = await ReferMember.findOne({ referCode: newReferUser.referredUserReferCode });
+
+    while(referredMember && level <= 7){
+      const referredLevel = await ReferralLevelModel.findOne({ $and: [{ userId: referredMember.userId }, { level: level }] });
+      if(referredLevel) referredLevel.users.push({ earning: 0, isWithdrawalEnabled: false, user: new_user._id}); 
+      else await ReferralLevelModel.create({ level: level, userId: referredMember.userId, users: [{ user: new_user._id, earning: 0, isWithdrawalEnabled: false }] });
+
+      await redis.del(`userReferShortDashboard-${referredMember.userId}`);
+      await redis.del(`userReferDashboard-${referredMember.userId}`);
+
+      referredMember = (await ReferMember.findOne({ referCode: referredMember.referredUserReferCode })) || undefined;
+      level += 1;
+    }
+  }
+
   next();
 });
 
