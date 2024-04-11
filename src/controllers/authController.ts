@@ -104,7 +104,7 @@ export const sendOTP = TryCatch(async (req, res, next) => {
   const otpHash: string = await bcrypt.hash(otp.toString(), saltRound);
 
   user.otp = otpHash;
-  user.otpExpiry =  15 * 60 * 1000;
+  user.otpExpiry =  Date.now() + 15 * 60 * 1000;
   user.otpToken = otpToken;
   await user.save();
 
@@ -318,4 +318,44 @@ export const resetPassword = TryCatch(async (
       success: true,
       message: "Password changed.",
     });
+});
+
+export const resendOTP = TryCatch(async (
+  req,
+  res,
+  next
+) => {
+    const { token:isToken } = req.body;
+
+
+    let token;
+    
+    if(isToken){
+      token = isToken;
+    }else{
+      token = req.cookies["otptoken"];
+    }
+
+    if (!token) {
+      console.log(token)
+      return next(new ErrorHandler("Something is missing.", 404));
+    }
+
+    if (!jwtSecretKey) {
+      return next(new ErrorHandler("Internal Error Occurred!", 400));
+    }
+
+    const { userId } = jwt.verify(token, jwtSecretKey) as { userId: string };
+    const user = await User.findById(userId);
+
+    if (!(user.otpExpiry > Date.now())) {
+      user.otp = undefined;
+      user.otpExpiry = undefined;
+      user.otpToken = undefined;
+      await user.save();
+      return next(new ErrorHandler("Verification session is expired", 401));
+    }
+
+    req.body.userId = userId;
+    next();
 });

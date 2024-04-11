@@ -1,10 +1,11 @@
 import express, { Router } from "express";
-import { forgotPassword, resetPassword, sendOTP, signin, signup, verify } from "../controllers/authController.js";
+import { forgotPassword, resendOTP, resetPassword, sendOTP, signin, signup, verify } from "../controllers/authController.js";
 
 const router: Router = express.Router();
 
 router.post("/signup", signup, sendOTP);
 router.post("/verify", verify);
+router.post("/resend-otp", resendOTP, sendOTP);
 router.post("/signin", signin);
 router.post("/forgot-password", forgotPassword, sendOTP);
 router.patch("/reset-password", resetPassword);
