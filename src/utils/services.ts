@@ -1,6 +1,9 @@
 import bcrypt from "bcrypt";
 import { AuthSignupUserType } from "../types/user.js";
 import crypto from "crypto";
+import User from "../models/User.js";
+import ReferMember from "../models/ReferMember.js";
+import { redis } from "./Redis.js";
 
 export const checkSignupItemsAndMakeStructured = async (
   body: AuthSignupUserType | null
@@ -20,6 +23,13 @@ export const checkSignupItemsAndMakeStructured = async (
   const hashedPassword = await bcrypt.hash(password, saltRound);
 
   const referCode = generateReferCode(phone?.toString() || email);
+
+  if(referredUserReferCode){
+    const user = await ReferMember.findOne({ referCode: referredUserReferCode });
+    await redis.del(`userReferShortDashboard-${user.userId}`);
+    await redis.get(`userReferDashboard-${user.userId}`);
+  }
+
 
   const result: AuthSignupUserType = {
     ...body,
