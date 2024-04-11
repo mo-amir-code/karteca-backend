@@ -19,7 +19,7 @@ export const checkSignupItemsAndMakeStructured = async (
 
   const hashedPassword = await bcrypt.hash(password, saltRound);
 
-  const referCode = generateReferCode(phone?.toString() || email.slice(0, 4));
+  const referCode = generateReferCode(phone?.toString() || email);
 
   const result: AuthSignupUserType = {
     ...body,
@@ -33,7 +33,7 @@ export const checkSignupItemsAndMakeStructured = async (
 };
 
 const generateReferCode = (telephone: string): string => {
-  const phone = telephone.toString();
+  const phone = telephone.replace(/[^a-zA-Z]/g, '').slice(0, 4);
   const randomString = Math.random().toString(36).substring(2, 8).slice(0, 4);
   return (
     randomString + phone.slice(phone.length - 4, phone.length)
