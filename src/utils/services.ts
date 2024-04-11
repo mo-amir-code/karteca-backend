@@ -37,7 +37,7 @@ const generateReferCode = (telephone: string): string => {
   const randomString = Math.random().toString(36).substring(2, 8).slice(0, 4);
   return (
     randomString + phone.slice(phone.length - 4, phone.length)
-  ).toUpperCase();
+  ).toUpperCase().slice(0, 6);
 };
 
 export const generateOTP = (): number => {
