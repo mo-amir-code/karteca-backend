@@ -91,7 +91,9 @@ export const createOrders = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("Orders are missing.", 404));
   }
 
-  console.log(wallet)
+  if(!orders[0].deliveryAddress){
+    return next(new ErrorHandler("Delivery address is required", 404));
+  }
 
   let totalAmount: number = orders.reduce(
     (total: number, current: CPaymentOrderType) => {

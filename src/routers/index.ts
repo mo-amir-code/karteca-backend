@@ -7,11 +7,13 @@ import orderRouter from "./orderRouter.js";
 import paymentRouter from "./paymentRouter.js";
 import referRouter from "./referRouter.js";
 import notificationsRouter from "./notificationRouter.js";
+import bannerRouter from "./bannerRouter.js";
 
 const router: Router = express.Router();
 
 router.use("/auth", authRouter);
 router.use("/user", userRouter);
+router.use("/banner", bannerRouter);
 router.use("/product", productRouter);
 router.use("/cart", cartRouter);
 router.use("/order", orderRouter);

@@ -2,8 +2,8 @@ import mongoose, { Document, Schema, Model } from "mongoose";
 
 interface TransactionType extends Document {
   userId: Schema.Types.ObjectId;
-  type: "withdrawal" | "credit" | "spend";
-  mode: "referral" | "giftCard" | "shopping";
+  type: "withdrawal" | "invest" | "spend";
+  mode: "referral" | "giftCard" | "shopping" | "promotion";
   wallet?:{
     name: { type: String },
     amount: { type: Number }
@@ -24,12 +24,12 @@ const transactionSchema: Schema<TransactionType> = new Schema<TransactionType>(
     type: {
       type: String,
       required: true,
-      enum: ["withdrawal", "credit", "spend"],
+      enum: ["withdrawal", "invest", "spend"],
     },
     mode: {
       type: String,
       required: true,
-      enum: ["referral", "giftCard", "shopping"],
+      enum: ["referral", "giftCard", "shopping", ""],
     },
     wallet:{
       name: { type: String },
