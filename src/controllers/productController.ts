@@ -203,6 +203,15 @@ export const searchProduct = TryCatch(async (req, res) => {
     }
   }
 
+  if (query) {
+    const regex = new RegExp(query.trim().split(/\s+/).join('|'), 'i');
+    queryFilters.$or = [
+      { title: regex },
+      { description: regex },
+      { 'category.child': regex }
+    ];
+  }
+
   let totalItems = await Product.countDocuments(queryFilters).sort(sortQuery);
 
   let filteredProducts = await Product.find(queryFilters)
@@ -212,14 +221,28 @@ export const searchProduct = TryCatch(async (req, res) => {
 
   filteredProducts = await Promise.all(
     filteredProducts.map(async (item) => {
+
+      const newItem = await JSON.parse(JSON.stringify(item));
+
+      const catchedRatingAndReviews = await redis.get(`product-ratingAndReviews-${item._id}`);
+
+      if(catchedRatingAndReviews){
+        return {
+          ...newItem,
+          ratingAndReviews: JSON.parse(catchedRatingAndReviews)
+        }
+      }
+
       const ratingAndReviews = await RatingAndReviews.find({
         product: item._id,
       });
 
-      const { totalReviews, avgRating } =
-        await calculateRatingAndReviews(ratingAndReviews);
+      const { totalReviews, avgRating } = await calculateRatingAndReviews(ratingAndReviews);
 
-      const newItem = await JSON.parse(JSON.stringify(item));
+      await redis.set(`product-ratingAndReviews-${item._id}`, JSON.stringify({
+        totalReviews,
+        avgRating: avgRating > 0? avgRating : 0
+      }))
 
       return {
         ...newItem,
