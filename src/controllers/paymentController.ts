@@ -84,6 +84,8 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
       }
 
       await redis.del(`userReferDashboard-${mainUserId}`);
+      await redis.del(`userReferShortDashboard-${mainUserId}`);
+      await redis.del(`userCheckoutWallets-${mainUserId}`);
 
       await Notification.create({
         userId: mainUserId,

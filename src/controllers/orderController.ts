@@ -102,6 +102,20 @@ export const createOrders = TryCatch(async (req, res, next) => {
     0
   );
 
+  const {name, email, phone, coinBalance, mainBalance} = await User.findById(userId).select("name email phone");
+  const { currentReferralEarning } = await ReferMember.findOne({ userId:userId })
+
+  if(wallet){
+    switch(wallet?.name){
+      case "mainBalance":
+        if(!(mainBalance >= wallet.amount)) return next(new ErrorHandler("Something went wrong!", 400));
+      case "coinBalance":
+        if(!(coinBalance >= wallet.amount)) return next(new ErrorHandler("Something went wrong!", 400));
+      case "currentReferralEarning":
+        if(!(currentReferralEarning >= wallet.amount)) return next(new ErrorHandler("Something went wrong!", 400));
+    }
+  }
+
   const txnData: CTransactionType = {
     userId: userId,
     type: "spend",
@@ -144,8 +158,6 @@ export const createOrders = TryCatch(async (req, res, next) => {
       paymentMode: "wallet"
     })
   }
-
-  const {name, email, phone} = await User.findById(userId).select("name email phone");
 
   const data = await makePayment({totalAmount, transactionId: newTransaction._id, name, email, phone});
 
