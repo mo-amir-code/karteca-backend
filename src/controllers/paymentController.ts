@@ -85,7 +85,6 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
 
       await redis.del(`userReferDashboard-${mainUserId}`);
       await redis.del(`userReferShortDashboard-${mainUserId}`);
-      await redis.del(`userCheckoutWallets-${mainUserId}`);
 
       await Notification.create({
         userId: mainUserId,
@@ -97,25 +96,24 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
       const wallet = transaction?.wallet as | { name: string; amount: number } | undefined;
 
       if (wallet) {
-        await redis.del(`userReferShortDashboard-${mainUserId}`);
         await redis.del(`userCheckoutWallets-${mainUserId}`);
 
         switch (wallet?.name) {
           case "mainBalance":
             const user = await User.findById(mainUserId);
-            user.mainBalance -= wallet?.amount;
+            user.mainBalance = user.mainBalance - wallet?.amount;
             await user.save();
             break;
           case "coinBalance":
             const coinUser = await User.findById(mainUserId);
-            coinUser.coinBalance -= wallet?.amount;
+            coinUser.coinBalance = coinUser.coinBalance - wallet?.amount;
             await coinUser.save();
             break;
           case "currentReferralEarning":
             const referMember = await ReferMember.findOne({
               userId: mainUserId,
             });
-            referMember.currentReferralEarning -= wallet?.amount;
+            referMember.currentReferralEarning = referMember.currentReferralEarning - wallet?.amount;
             await referMember.save();
             break;
           default:
