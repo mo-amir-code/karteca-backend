@@ -12,6 +12,7 @@ import ErrorHandler from "../utils/utility-class.js";
 import ReferMember from "../models/ReferMember.js";
 import { redis } from "../utils/Redis.js";
 import ReferralLevelModel from "../models/ReferralLevel.js";
+import { fi } from "@faker-js/faker";
 
 export type MiddleRequestType = {
   userId: string;
@@ -46,7 +47,7 @@ export const signup = TryCatch(async (req, res, next) => {
     }
   }
     
-  const { email } = newUser as AuthSignupUserType;
+  const { email, gender } = newUser as AuthSignupUserType;
 
   const user: UserType | null = await User.findOne({ email });
 
@@ -55,6 +56,13 @@ export const signup = TryCatch(async (req, res, next) => {
   } else if (user) {
     req.body.userId = user._id;
     return next();
+  }
+
+  if(!gender){
+    return res.status(404).json({
+      success: false,
+      message: "Enter atleast first character of gender"
+    });
   }
 
   const new_user = await User.create(newUser);

@@ -1,10 +1,6 @@
 import bcrypt from "bcrypt";
 import { AuthSignupUserType } from "../types/user.js";
 import crypto from "crypto";
-import User from "../models/User.js";
-import ReferMember from "../models/ReferMember.js";
-import { redis } from "./Redis.js";
-import ReferralLevelModel from "../models/ReferralLevel.js";
 
 export const checkSignupItemsAndMakeStructured = async (
   body: AuthSignupUserType | null
@@ -25,10 +21,18 @@ export const checkSignupItemsAndMakeStructured = async (
 
   const referCode = generateReferCode(phone?.toString() || email);
 
+  let newGender = gender.toLowerCase();
+
+  switch(newGender[0]){
+    case "m": newGender = "male"; break;
+    case "f": newGender = "female"; break;
+    case "t": newGender = "transgender"; break;
+  }
+
   const result: AuthSignupUserType = {
     ...body,
     password: hashedPassword,
-    gender: gender.toLowerCase() as "male" | "female" | "transgender",
+    gender: newGender as "male" | "female" | "transgender",
     referredUserReferCode: referredUserReferCode?.toUpperCase() || undefined,
     referCode
   };
