@@ -28,7 +28,7 @@ export const getUserNotifications = TryCatch(async (req, res, next) => {
     }, 0);
 
     const data = {
-        notifications: ntf,
+        notifications: ntf.reverse(),
         notificationCount: nt
     }
 

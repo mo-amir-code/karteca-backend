@@ -36,7 +36,7 @@ export const fetchUserOrder = TryCatch(async (req, res, next) => {
   return res.status(200).json({
     success: true,
     message: "User orders fetched.",
-    data: orders
+    data: orders.reverse()
   });
 }); // redis done
 
@@ -102,19 +102,23 @@ export const createOrders = TryCatch(async (req, res, next) => {
     0
   );
 
-  const {name, email, phone, coinBalance, mainBalance} = await User.findById(userId).select("name email phone");
+  const {name, email, phone, coinBalance, mainBalance} = await User.findById(userId).select("name email phone coinBalance mainBalance");
   const { currentReferralEarning } = await ReferMember.findOne({ userId:userId })
 
   if(wallet){
     switch(wallet?.name){
       case "mainBalance":
-        if(!(mainBalance >= wallet.amount)) return next(new ErrorHandler("Something went wrong!", 400));
+        if(mainBalance < wallet.amount) return next(new ErrorHandler("Something went wrong!", 400));
+        break;
       case "coinBalance":
-        if(!(coinBalance >= wallet.amount)) return next(new ErrorHandler("Something went wrong!", 400));
+        if(coinBalance < wallet.amount) return next(new ErrorHandler("Something went wrong!", 400));
+        break;
       case "currentReferralEarning":
-        if(!(currentReferralEarning >= wallet.amount)) return next(new ErrorHandler("Something went wrong!", 400));
+        if(currentReferralEarning < wallet.amount) return next(new ErrorHandler("Something went wrong!", 400));
+        break;
     }
   }
+
 
   const txnData: CTransactionType = {
     userId: userId,
@@ -135,13 +139,13 @@ export const createOrders = TryCatch(async (req, res, next) => {
     };
   });
 
-  await Order.create(newOrders);  
-  await Cart.deleteMany({userId})
-  await redis.del(`userOrders-${userId}`);
-  await redis.del(`userCartCounts-${userId}`);
-  await redis.del(`userCartItem-${userId}`);
+  await Order.create(newOrders);
 
   if(paymentMode === "cash"){
+    await Cart.deleteMany({userId: userId})
+    await redis.del(`userOrders-${userId}`);
+    await redis.del(`userCartCounts-${userId}`);
+    await redis.del(`userCartItem-${userId}`);
     return res.status(200).json({
       success: true,
       message: "Order placed",
@@ -149,15 +153,47 @@ export const createOrders = TryCatch(async (req, res, next) => {
     })
   }
 
-  if(wallet) totalAmount -= wallet.amount;
+  if(totalAmount <= (wallet?.amount || 0)){
+    newTransaction.status = "success";
+    await newTransaction.save();
+    await Cart.deleteMany({userId: userId});
+    await redis.del(`userOrders-${userId}`);
+    await redis.del(`userCartCounts-${userId}`);
+    await redis.del(`userCartItem-${userId}`);
+    await redis.del(`userCheckoutWallets-${userId}`);
 
-  if(totalAmount === 0){
+    switch (wallet?.name) {
+      case "mainBalance":
+        const user = await User.findById(userId);
+        user.mainBalance -= totalAmount < wallet.amount? totalAmount : wallet?.amount;
+        await user.save();
+        break;
+      case "coinBalance":
+        const coinUser = await User.findById(userId);
+        coinUser.coinBalance -= totalAmount < wallet.amount? totalAmount :  wallet?.amount;
+        await coinUser.save();
+        break;
+      case "currentReferralEarning":
+        await redis.del(`userReferDashboard-${userId}`);
+        await redis.del(`userReferShortDashboard-${userId}`);
+        const referMember = await ReferMember.findOne({
+          userId: userId,
+        });
+        referMember.currentReferralEarning -= totalAmount < wallet.amount? totalAmount : wallet?.amount;
+        await referMember.save();
+        break;
+      default:
+        null;
+    }
+
     return res.status(200).json({
       success: true,
       message: "Order placed",
       paymentMode: "wallet"
     })
   }
+
+  if(wallet) totalAmount -= wallet.amount;
 
   const data = await makePayment({totalAmount, transactionId: newTransaction._id, name, email, phone});
 

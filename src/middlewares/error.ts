@@ -3,6 +3,8 @@ import ErrorHandler from "../utils/utility-class.js";
 import { ControllerType } from "../types/user.js";
 
 export const errorHandler = (err:ErrorHandler, req:Request, res:Response, next:NextFunction) => {
+    console.log(err)
+
     err.message ||= "Internal Error Occurred!";
     err.statusCode ||= 500;
 

@@ -19,7 +19,7 @@ export const checkSignupItemsAndMakeStructured = async (
 
   const hashedPassword = await bcrypt.hash(password, saltRound);
 
-  const referCode = generateReferCode(phone?.toString() || email);
+  const referCode = generateReferCode(email);
 
   let newGender = gender.toLowerCase();
 

@@ -12,7 +12,6 @@ import ErrorHandler from "../utils/utility-class.js";
 import ReferMember from "../models/ReferMember.js";
 import { redis } from "../utils/Redis.js";
 import ReferralLevelModel from "../models/ReferralLevel.js";
-import { fi } from "@faker-js/faker";
 
 export type MiddleRequestType = {
   userId: string;

@@ -99,7 +99,7 @@ export const fetchUserDashboard = TryCatch(async (req, res, next) => {
       isWithdrawalPermission: withdrawalPermission,
       referCode,
       levelsEarning: levelsEarning,
-      withdrawalHistory
+      withdrawalHistory: withdrawalHistory.reverse()
     }
 
     await redis.set(`userReferDashboard-${userId}`, JSON.stringify(resData));
@@ -204,7 +204,7 @@ export const addMoney = TryCatch(async (req, res, next) => {
 
   const transactionData:CTransactionType = {
     mode: "referral",
-    type: "credit",
+    type: "invest",
     amount,
     userId
   }

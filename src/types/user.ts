@@ -112,7 +112,7 @@ export interface CPaymentOrderType{
 export interface CTransactionType{
   _id?:string;
   userId: string;
-  type: "withdrawal" | "credit" | "spend";
+  type: "withdrawal" | "invest" | "spend";
   mode: "referral" | "giftCard" | "shopping";
   transactionId?: string;
   wallet?:{
