@@ -1,6 +1,8 @@
 import bcrypt from "bcrypt";
 import { AuthSignupUserType } from "../types/user.js";
 import crypto from "crypto";
+import Cart from "../models/Cart.js";
+import { redis } from "./Redis.js";
 
 export const checkSignupItemsAndMakeStructured = async (
   body: AuthSignupUserType | null
@@ -9,7 +11,15 @@ export const checkSignupItemsAndMakeStructured = async (
     throw new Error("Request body is missing.");
   }
 
-  const { name, email, gender, password, address, phone, referredUserReferCode } = body;
+  const {
+    name,
+    email,
+    gender,
+    password,
+    address,
+    phone,
+    referredUserReferCode,
+  } = body;
 
   if (!name || !password || !email || !gender || !address) {
     throw new Error("Required fields are missing in the sign up form.");
@@ -23,10 +33,16 @@ export const checkSignupItemsAndMakeStructured = async (
 
   let newGender = gender.toLowerCase();
 
-  switch(newGender[0]){
-    case "m": newGender = "male"; break;
-    case "f": newGender = "female"; break;
-    case "t": newGender = "transgender"; break;
+  switch (newGender[0]) {
+    case "m":
+      newGender = "male";
+      break;
+    case "f":
+      newGender = "female";
+      break;
+    case "t":
+      newGender = "transgender";
+      break;
   }
 
   const result: AuthSignupUserType = {
@@ -34,18 +50,18 @@ export const checkSignupItemsAndMakeStructured = async (
     password: hashedPassword,
     gender: newGender as "male" | "female" | "transgender",
     referredUserReferCode: referredUserReferCode?.toUpperCase() || undefined,
-    referCode
+    referCode,
   };
 
   return result;
 };
 
 const generateReferCode = (telephone: string): string => {
-  const phone = telephone.replace(/[^a-zA-Z]/g, '').slice(0, 4);
+  const phone = telephone.replace(/[^a-zA-Z]/g, "").slice(0, 4);
   const randomString = Math.random().toString(36).substring(2, 8).slice(0, 4);
-  return (
-    randomString + phone.slice(phone.length - 4, phone.length)
-  ).toUpperCase().slice(0, 6);
+  return (randomString + phone.slice(phone.length - 4, phone.length))
+    .toUpperCase()
+    .slice(0, 6);
 };
 
 export const generateOTP = (): number => {
@@ -88,16 +104,57 @@ export function calculateSHA256(input: string) {
   return hash.digest("hex");
 }
 
-export const calculateRatingAndReviews = async (ratingAndReviews:any[]) => {
-  const totalRating = ratingAndReviews.filter((item) => item.title !== undefined).length;
+export const calculateRatingAndReviews = async (ratingAndReviews: any[]) => {
+  const totalRating = ratingAndReviews.filter(
+    (item) => item.title !== undefined
+  ).length;
   const totalReviews = ratingAndReviews.length - totalRating;
 
-  let avgRating = await ratingAndReviews.reduce((rate: number, current: any) => {
-    return rate + current.rate;
-  }, 0);
+  let avgRating = await ratingAndReviews.reduce(
+    (rate: number, current: any) => {
+      return rate + current.rate;
+    },
+    0
+  );
 
-  
   avgRating = avgRating / ratingAndReviews.length;
 
-  return {totalRating, totalReviews, avgRating}
+  return { totalRating, totalReviews, avgRating };
+};
+
+export const clearCreateOrderCachedRedis = async ({
+  userId,
+}: {
+  userId: string;
+}) => {
+  await Cart.deleteMany({ userId: userId });
+  await redis.del(`userOrders-${userId}`);
+  await redis.del(`userCartCounts-${userId}`);
+  await redis.del(`userCartItem-${userId}`);
+  await redis.del(`userCheckoutWallets-${userId}`);
+  await redis.del(`userTransactions-${userId}`);
+  await redis.del(`userCheckoutWallets-${userId}`);
+};
+
+export const returnWalletAmount = ({name, amount, totalAmount}:{name?:string | undefined, amount?:number | undefined, totalAmount:number}):number => {
+  if(!name || !amount){
+    return 0
+  }
+
+  if(name === "coinBalance"){
+    if(totalAmount < 500){
+       if(amount <= 10) return amount;
+       else return 10 
+    }else if(totalAmount <= 1000){
+      if(amount <= 20) return amount;
+      else return 20
+    } else if(totalAmount <= 2000){
+      if(amount <= 30) return amount;
+      else return 30
+    } else if(totalAmount > 2000){
+      if(amount <= 40) return amount;
+      else return 40
+    }
+    return 0
+  }else return amount || 0
 }

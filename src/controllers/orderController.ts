@@ -8,6 +8,7 @@ import { redis } from "../utils/Redis.js";
 import Cart from "../models/Cart.js";
 import { makePayment } from "../middlewares/payment.js";
 import ReferMember from "../models/ReferMember.js";
+import { clearCreateOrderCachedRedis, returnWalletAmount } from "../utils/services.js";
 
 export const fetchUserOrder = TryCatch(async (req, res, next) => {
   const { userId } = req.params;
@@ -128,6 +129,13 @@ export const createOrders = TryCatch(async (req, res, next) => {
     wallet
   };
 
+  if(wallet?.name === "coinBalance"){
+    const coinBalanceAmount = returnWalletAmount({totalAmount:totalAmount, amount:wallet.amount, name:wallet.name});
+    txnData.wallet!.amount = coinBalanceAmount;
+    totalAmount -= coinBalanceAmount
+    await clearCreateOrderCachedRedis({userId})
+  }
+
   const newTransaction = await Transaction.create(txnData);
 
   const newOrders = orders.map((order) => {
@@ -142,10 +150,7 @@ export const createOrders = TryCatch(async (req, res, next) => {
   await Order.create(newOrders);
 
   if(paymentMode === "cash"){
-    await Cart.deleteMany({userId: userId})
-    await redis.del(`userOrders-${userId}`);
-    await redis.del(`userCartCounts-${userId}`);
-    await redis.del(`userCartItem-${userId}`);
+    await clearCreateOrderCachedRedis({userId:userId})
     return res.status(200).json({
       success: true,
       message: "Order placed",
@@ -153,15 +158,10 @@ export const createOrders = TryCatch(async (req, res, next) => {
     })
   }
 
-  if(totalAmount <= (wallet?.amount || 0)){
+  if(totalAmount <= (wallet?.amount || 0) && wallet?.name !== "coinBalance"){
     newTransaction.status = "success";
     await newTransaction.save();
-    await Cart.deleteMany({userId: userId});
-    await redis.del(`userOrders-${userId}`);
-    await redis.del(`userCartCounts-${userId}`);
-    await redis.del(`userCartItem-${userId}`);
-    await redis.del(`userCheckoutWallets-${userId}`);
-
+    await clearCreateOrderCachedRedis({userId});
     switch (wallet?.name) {
       case "mainBalance":
         const user = await User.findById(userId);
@@ -193,7 +193,7 @@ export const createOrders = TryCatch(async (req, res, next) => {
     })
   }
 
-  if(wallet) totalAmount -= wallet.amount;
+  if(wallet && wallet.name !== "coinBalance") totalAmount -= wallet.amount;
 
   const data = await makePayment({totalAmount, transactionId: newTransaction._id, name, email, phone});
 
