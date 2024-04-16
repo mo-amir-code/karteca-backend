@@ -86,6 +86,34 @@ export const fetchUserAddresses = TryCatch(async (req, res, next) => {
   });
 }); // redis done
 
+export const fetchUsertransactions = TryCatch(async (req, res, next) => {
+  const { userId } = req.params;
+
+  if (!userId) {
+    return next(new ErrorHandler("Something is missing here.", 404));
+  }
+
+  const catchedTransactions = await redis.get(`userTransactions-${userId}`);
+
+  if(catchedTransactions){
+    return res.status(200).json({
+      success: true,
+      message: "User transactions fetched.",
+      data: JSON.parse(catchedTransactions)
+    });
+  }
+
+  const transactions = (await Transaction.find({ userId }).select("wallet status amount createdAt")).reverse();
+
+  await redis.set(`userTransactions-${userId}`, JSON.stringify(transactions));
+
+  return res.status(200).json({
+    success: true,
+    message: "User transactions fetched.",
+    data: transactions,
+  });
+}); // redis done
+
 export const addUserAddress = TryCatch(async (req, res, next) => {
   const address = req.body as CUserDeliveryAddressType;
 
