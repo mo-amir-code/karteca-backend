@@ -95,7 +95,7 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
           await currentMemberLevel.save();
         } else {
           // if level not found then I creates with current level, current refer member user id and main user info in users
-          await ReferralLevel.create({
+           await ReferralLevel.create({
             level: level,
             userId: currentReferMember.userId,
             users: [
