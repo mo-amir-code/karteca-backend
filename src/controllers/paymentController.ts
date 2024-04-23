@@ -41,40 +41,60 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
     // ENd with update
 
     if (isFrom === "refer") {
-      let level = 1;
+      let level = 1; // initializing level
+
+      // Fetching main user refer member information
       const currentReferMemberMainUser = await ReferMember.findOne({
         userId: mainUserId,
       });
+
+      // Updating main user refer member withdrawal permission
       currentReferMemberMainUser.withdrawalPermission = true;
 
+      // Fetching main user information
       const mainUserInfo = await User.findById(mainUserId);
+
+      // Adding main user coinBalance with current transaction amount
       mainUserInfo.coinBalance += transaction.amount;
 
+      // Saving main user information and refer member information
       await currentReferMemberMainUser.save();
       await mainUserInfo.save();
 
+      // Fetching current refer member with main user referred user refer code
       let currentReferMember = await ReferMember.findOne({
         referCode: currentReferMemberMainUser.referredUserReferCode,
       });
 
+      // running while loop until currentReferMember does contains nill or undefined value and upto 7 levels
       while (currentReferMember && level <= 7) {
+        // Fetching level wise earning
         let earning = Math.floor(getLevelWiseMoney(level, transaction.amount));
+        
+        // adding current level earning in current user refer member's currentReferralEarning and totalReferralEarning
         currentReferMember.currentReferralEarning += earning;
         currentReferMember.totalReferralEarning += earning;
+        // Updating with changes
         await currentReferMember.save();
 
+        // Fetching current refer member with current level and current refer member user id
         const currentMemberLevel = await ReferralLevel.findOne({
           level: level,
           userId: currentReferMember.userId,
         });
+
+        // checking current Member Level is exist
         if (currentMemberLevel) {
+          // If exist then I adds current level earning, enabling withdrawal permission and main user id
           currentMemberLevel.users.push({
             earning: earning,
             isWithdrawalEnabled: true,
             user: mainUserId,
           });
+          // Updating with changes
           await currentMemberLevel.save();
         } else {
+          // if level not found then I creates with current level, current refer member user id and main user info in users
           await ReferralLevel.create({
             level: level,
             userId: currentReferMember.userId,
@@ -84,34 +104,45 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
           });
         }
 
+        // Here I am creating a notification to the current refer member user for referral with earning and level
         await Notification.create({
           userId: currentReferMember.userId,
           type: "referral",
           message: `Congratulations! You got ${earning} rupee(s) of referral earning of level ${level}`,
         });
 
+        // Here I am deleting redis cached data of current refer member
         await redis.del(`userReferDashboard-${currentReferMember.userId}`);
         await redis.del(`userReferShortDashboard-${currentReferMember.userId}`);
         await redis.del(`userCheckoutWallets-${currentReferMember.userId}`);
 
+        // Here updating level with 1
         level += 1;
-        if (currentReferMember.referredUserReferCode)
+
+        // Here I am finding another level user with current refer member referred user refer code if referred code and user exist then it will assign to currentReferMember otherwise null
+        if (currentReferMember.referredUserReferCode){
           currentReferMember = await ReferMember.findOne({
             referCode: currentReferMember.referredUserReferCode,
           });
+        }
         else currentReferMember = null;
       }
+      // End of while loop
 
+
+        // Here I am deleting redis cache of main user
         await redis.del(`userReferDashboard-${mainUserId}`);
         await redis.del(`userReferShortDashboard-${mainUserId}`);
         await redis.del(`userCheckoutWallets-${mainUserId}`);
 
+        // Creating notification for main user of activating withdrawal and adding activation amount as coin balance
       await Notification.create({
         userId: mainUserId,
         type: "payment",
         message: `Your withdrawal wallet is activated and ₹${transaction.amount} added as coin in Coin Wallet`,
       });
 
+      // deleting redis cached for mainuser updated notifications
       await redis.del(`userNotifications-${mainUserId}`);
 
       return res.status(200).json({
