@@ -103,7 +103,7 @@ export const createOrders = TryCatch(async (req, res, next) => {
     0
   );
 
-  const {name, email, phone, coinBalance, mainBalance} = await User.findById(userId).select("name email phone coinBalance mainBalance");
+  const {email, coinBalance, mainBalance} = await User.findById(userId).select("name email phone coinBalance mainBalance");
   const { currentReferralEarning } = await ReferMember.findOne({ userId:userId })
 
   if(wallet){
@@ -168,11 +168,6 @@ export const createOrders = TryCatch(async (req, res, next) => {
         user.mainBalance -= totalAmount < wallet.amount? totalAmount : wallet?.amount;
         await user.save();
         break;
-      case "coinBalance":
-        const coinUser = await User.findById(userId);
-        coinUser.coinBalance -= totalAmount < wallet.amount? totalAmount :  wallet?.amount;
-        await coinUser.save();
-        break;
       case "currentReferralEarning":
         await redis.del(`userReferDashboard-${userId}`);
         await redis.del(`userReferShortDashboard-${userId}`);
@@ -195,12 +190,18 @@ export const createOrders = TryCatch(async (req, res, next) => {
 
   if(wallet && wallet.name !== "coinBalance") totalAmount -= wallet.amount;
 
-  const data = await makePayment({totalAmount, transactionId: newTransaction._id, name, email, phone});
+  const paymentQrCodeUrl = await makePayment({totalAmount, email});
+  newTransaction.paymentQrCodeUrl = paymentQrCodeUrl;
+  await newTransaction.save();
 
   return res.status(200).json({
     success: true,
-    message: "Order placed",
+    message: "Order created",
     paymentMode: paymentMode,
-    data
+    data: {
+      paymentQrCodeUrl,
+      totalAmount,
+      transactionId: newTransaction._id
+    }
   });
 }); // redis done

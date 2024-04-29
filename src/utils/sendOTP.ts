@@ -13,16 +13,17 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-interface MailOptions {
-    to: string;
+export interface MailOptions {
+    from:string;
+    to: string[];
     subject: string;
     html: string;
 }
 
-export const sendMail = async ({ to, subject, html }: MailOptions): Promise<void> => {
+export const sendMail = async ({ from, to, subject, html }: MailOptions): Promise<void> => {
     try {
         let mailOptions = {
-            from: 'wowstore.com OTP Verification',
+            from,
             to,
             subject,
             html

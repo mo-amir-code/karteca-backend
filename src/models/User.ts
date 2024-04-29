@@ -4,7 +4,7 @@ export interface UserType extends Document {
   name: string;
   email: string;
   gender: "male" | "female" | "transgender";
-  role: "customer" | "seller" | "admin";
+  role: "user" | "seller" | "admin";
   password: string;
   phone?: number;
   verified: boolean;
@@ -36,8 +36,8 @@ const userSchema: Schema<UserType> = new Schema<UserType>(
     },
     role: {
       type: String,
-      default: "customer",
-      enum: ["customer", "seller", "admin"],
+      default: "user",
+      enum: ["user", "seller", "admin"],
     },
     password: { type: String, required: true },
     phone: { type: Number },

@@ -93,15 +93,15 @@ export const fetchUsertransactions = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("Something is missing here.", 404));
   }
 
-  const catchedTransactions = await redis.get(`userTransactions-${userId}`);
+  // const catchedTransactions = await redis.get(`userTransactions-${userId}`);
 
-  if(catchedTransactions){
-    return res.status(200).json({
-      success: true,
-      message: "User transactions fetched.",
-      data: JSON.parse(catchedTransactions)
-    });
-  }
+  // if(catchedTransactions){
+  //   return res.status(200).json({
+  //     success: true,
+  //     message: "User transactions fetched.",
+  //     data: JSON.parse(catchedTransactions)
+  //   });
+  // }
 
   const transactions = (await Transaction.find({ userId }).select("wallet status amount createdAt")).reverse();
 

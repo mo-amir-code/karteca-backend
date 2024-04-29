@@ -8,9 +8,8 @@ interface TransactionType extends Document {
     name: { type: String },
     amount: { type: Number }
   }
-  paymentId: string,
-  paymentOrderId: string,
-  paymentSignature: string;
+  transactionId: string,
+  paymentQrCodeUrl: string,
   amount: number;
   status: "pending" | "processing" | "failed" | "success";
   currency: "inr" | "usd";
@@ -24,24 +23,23 @@ const transactionSchema: Schema<TransactionType> = new Schema<TransactionType>(
     type: {
       type: String,
       required: true,
-      enum: ["withdrawal", "invest", "spend"],
+      enum: ["withdrawal", "credit", "spend"],
     },
     mode: {
       type: String,
       required: true,
-      enum: ["referral", "giftCard", "shopping", ""],
+      enum: ["referral", "giftCard", "shopping", "subscription"],
     },
     wallet:{
       name: { type: String },
       amount: { type: Number }
     },
-    paymentId: { type: String },
-    paymentOrderId: { type: String },
-    paymentSignature: { type: String },
+    transactionId: { type: String },
+    paymentQrCodeUrl: { type: String },
     amount: { type: Number, required: true },
     status: {
       type: String,
-      enum: ["pending", "processing", "failed", "success"],
+      enum: ["pending", "processing", "failed", "success", "cancelled"],
       default: 'pending'
     },
     currency: { type: String, default: "inr", enum: ["inr", "usd"] },

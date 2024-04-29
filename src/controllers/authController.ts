@@ -1,5 +1,5 @@
 import User, { UserType } from "../models/User.js";
-import { sendMail } from "../utils/sendOTP.js";
+import { MailOptions, sendMail } from "../utils/sendOTP.js";
 import {
   checkSignupItemsAndMakeStructured,
   generateOTP,
@@ -17,12 +17,6 @@ export type MiddleRequestType = {
   userId: string;
   isFromForgotPassword?: boolean;
 };
-
-interface MailOptionType {
-  to: string;
-  subject: string;
-  html: string;
-}
 
 const jwtSecretKey: string | undefined = process.env.JWT_SECRET_KEY;
 
@@ -110,17 +104,19 @@ export const sendOTP = TryCatch(async (req, res, next) => {
   const otp: number = generateOTP();
   const otpToken: string = jwt.sign({ userId: user._id }, jwtSecretKey);
 
-  let mailOption: MailOptionType;
+  let mailOption: MailOptions;
 
   if (!isFromForgotPassword) {
     mailOption = {
-      to: user.email,
+      from:'karteca.in OTP Verification',
+      to: [user.email],
       subject: "OTP to verify your account.",
       html: `Your OTP is ${otp}, and click <a href="${process.env.CLIENT_ORIGIN}/auth/verify?token=${otpToken}">here</a> to verify your account`,
     };
   } else {
     mailOption = {
-      to: user.email,
+      from:'karteca.in OTP Verification',
+      to: [user.email],
       subject: "OTP to change your password.",
       html: `Your OTP is ${otp}, and click <a href="${process.env.CLIENT_ORIGIN}/auth/reset-password?token=${otpToken}">here</a> to reset your password.`,
     };

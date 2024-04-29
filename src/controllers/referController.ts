@@ -211,14 +211,16 @@ export const addMoney = TryCatch(async (req, res, next) => {
 
   const newTransaction = await Transaction.create(transactionData);
 
-  const {email, phone, name} = await User.findById(userId);
+  const {email} = await User.findById(userId);
 
-  const data = await makePayment({totalAmount:amount, transactionId: newTransaction._id, name, email, phone});
+  const paymentQrCodeUrl = await makePayment({totalAmount:amount, email});
+  newTransaction.paymentQrCodeUrl = paymentQrCodeUrl;
+  await newTransaction.save();
 
   return res.status(200).json({
     success: true,
     message: "Add money order created",
-    data
-  })
+    paymentQrCodeUrl
+  });
     
 }); 

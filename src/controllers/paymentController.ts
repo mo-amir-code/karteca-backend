@@ -4,43 +4,62 @@ import Cart from "../models/Cart.js";
 import ReferMember from "../models/ReferMember.js";
 import ReferralLevel from "../models/ReferralLevel.js";
 import Transaction from "../models/Transaction.js";
-import { VerifyPaymentBodyType } from "../types/payment.js";
-import { calculateSHA256 } from "../utils/services.js";
+import { CancelPaymentType, CreateSubscriptionType, VerifyPaymentBodyType, VerifyPaymentRequestType } from "../types/payment.js";
+// import { calculateSHA256 } from "../utils/services.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { redis } from "../utils/Redis.js";
 import User from "../models/User.js";
 import Notification from "../models/Notification.js";
+import TxnVerifyRequest from "../models/TxnVerifyRequest.js";
+import { MailOptions, sendMail } from "../utils/sendOTP.js";
+import Subscription from "../models/Subscription.js"
+import { makePayment } from "../middlewares/payment.js";
 
 export const verifyPayment = TryCatch(async (req, res, next) => {
-  const { orderId, paymentId, signature, transactionId, isFrom } =
+  const { paymentStatus, transactionId, userTransactionId, isFrom } =
     req.body as VerifyPaymentBodyType;
 
-  if (!orderId || !paymentId || !signature || !transactionId) {
-    return next(new ErrorHandler("Something is missing", 404));
+  if(!paymentStatus || !transactionId || !userTransactionId){
+    return next(new ErrorHandler("Enter all required field(s)", 404))
   }
-
-  const token = orderId + "|" + paymentId;
-
-  const expectedSignature = calculateSHA256(token.toString());
-  const isAutheticated = expectedSignature == signature;
 
   // updating user transaction
   const transaction = await Transaction.findByIdAndUpdate(transactionId, {
     status: "processing",
   });
 
-  if (isAutheticated && transaction) {
+  if(transaction){
+    transaction.status = paymentStatus;
+    transaction.transactionId = userTransactionId;
+  }
+
+  if(paymentStatus !== "success" && transaction) {
+    await transaction.save();
+    return res.status(200).json({
+      success: true,
+      message: "Transaction status has been updated"
+    })
+  }
+
+  if (paymentStatus === "success" && transaction) {
     const mainUserId = new Types.ObjectId(transaction.userId.toString());
 
     // updating user transaction from procssing to success
     transaction.status = "success";
-    transaction.paymentId = paymentId;
-    transaction.paymentOrderId = orderId;
-    transaction.paymentSignature = signature;
     await transaction.save();
     // ENd with update
 
-    if (isFrom === "refer") {
+    if (isFrom === "subscription") {
+
+      const subsData = {
+        userId: mainUserId,
+        type: "premium",
+        transaction: transaction._id,
+        amount: transaction.amount
+      }
+
+      await Subscription.create(subsData);
+
       let level = 1; // initializing level
 
       // Fetching main user refer member information
@@ -80,7 +99,7 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
         // Fetching current refer member with current level and current refer member user id
         const currentMemberLevel = await ReferralLevel.findOne({
           level: level,
-          userId: currentReferMember.userId,
+          userId: currentReferMember.userId
         });
 
         // checking current Member Level is exist
@@ -112,6 +131,7 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
         });
 
         // Here I am deleting redis cached data of current refer member
+        await redis.del(`userNotifications-${currentReferMember.userId}`);
         await redis.del(`userReferDashboard-${currentReferMember.userId}`);
         await redis.del(`userReferShortDashboard-${currentReferMember.userId}`);
         await redis.del(`userCheckoutWallets-${currentReferMember.userId}`);
@@ -225,3 +245,91 @@ const getLevelWiseMoney = (level: number, amount: number) => {
       return 0;
   }
 };
+
+export const verifyPaymentRequest = TryCatch(async (req, res, next) => {
+  const { amount, userId, transactionId, isFrom } = req.body as VerifyPaymentRequestType;
+
+  if(!amount || !userId || !transactionId){
+    return next(new ErrorHandler("Required fields is/are empty", 404));
+  }
+
+  await TxnVerifyRequest.create({ amount, userId, transactionId });
+
+  await Notification.create({
+    userId,
+    type: "payment",
+    message: "Your transaction request has been sent. Please wait for next 2 hours."
+  });
+
+  await redis.del(`userNotifications-${userId}`);
+
+  let usersMailId = await User.find({ role: "admin" });
+  usersMailId = usersMailId.map((user) => user.email);
+
+  if(usersMailId.length === 0) usersMailId.push(process.env.ADMIN_MAIL_ID);
+
+  const mailData:MailOptions = {
+      from:'Karteca Pvt. Ltd.',
+      to: usersMailId,
+      subject: `Payment Verification Request for ${isFrom === "subscription"? "Subscription" : "Shopping"}`,
+      html: `You got a new payment verification request for ₹${amount}}`,
+  }
+
+  await sendMail(mailData);
+
+  return res.status(200).json({
+    success: true,
+    message: "Transaction Verification Request Sent"
+  });
+
+});
+
+export const cancelPayment = TryCatch(async (req, res, next) => {
+  const { transactionId } = req.body as CancelPaymentType;
+
+  if(!transactionId){
+    return next(new ErrorHandler("Required fields is/are empty", 404));
+  }
+
+  await Transaction.findByIdAndUpdate(transactionId, { status: "cancelled" });
+
+  return res.status(200).json({
+    success: true,
+    message: "Transaction Verification Request Sent"
+  });
+});
+
+export const createSubscription = TryCatch(async (req, res, next) => {
+  const { userId, amount, type } = req.body as CreateSubscriptionType
+
+  const user = await User.findById(userId);
+
+  if(!userId || !amount || !type || !user){
+    return next(new ErrorHandler("Required field(s) is/are missing", 404));
+  }
+
+  const txnData = {
+    userId,
+    type: "credit",
+    mode: "subscription",
+    amount
+  }
+
+  const txn = await Transaction.create(txnData);
+
+
+  const paymentQrCodeUrl = await makePayment({email: user.email, totalAmount: amount});
+
+  txn.paymentQrCodeUrl = paymentQrCodeUrl;
+  await txn.save();
+
+  return res.status(200).json({
+    success: true,
+    message: "Subscription payment order created",
+    data: {
+      paymentQrCodeUrl,
+      transactionId: txn._id
+    }
+  });
+
+});
