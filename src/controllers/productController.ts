@@ -11,15 +11,15 @@ import CategoriesWithImage from "../models/CategoriesWithImage.js";
 import { CategoryWithImageType } from "../types/product.js";
 
 export const getTopProducts = TryCatch(async (req, res) => {
-  // const cathedData = await redis.get("topProducts");
+  const cathedData = await redis.get("topProducts");
 
-  // if(cathedData){
-  //   return res.status(200).json({
-  //     success: true,
-  //     message: "Top Products fetched. catched",
-  //     data: JSON.parse(cathedData)
-  //   });
-  // }
+  if(cathedData){
+    return res.status(200).json({
+      success: true,
+      message: "Top Products fetched. catched",
+      data: JSON.parse(cathedData)
+    });
+  }
 
   const topProducts = await Product.find()
     .sort({ sold: -1 })
