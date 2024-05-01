@@ -14,7 +14,7 @@ interface WithdrawalRequestType extends Document {
 
 const withdrawalRequestSchema: Schema<WithdrawalRequestType> = new Schema({
     userId: {type: Schema.Types.ObjectId, ref: "User", required: true},
-    transactionId: {type: String, required: true},
+    transactionId: {type: String},
     amount: {type: Number, required: true},
     to: {
         bank: { type: Schema.Types.ObjectId, ref: "Bank" },
