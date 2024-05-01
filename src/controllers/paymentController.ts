@@ -386,6 +386,6 @@ export const withdrawalRequest = TryCatch(async (req, res, next) => {
 
   return res.status(200).json({
     success: true,
-    message: "Withdrawal request has been sent"
+    message: "Amount will be sent to your upi id under 6 hours"
   });
 });
