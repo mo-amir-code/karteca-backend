@@ -10,7 +10,7 @@ export const getCartItemsByUserId = TryCatch(async (req, res, next) => {
   const { userId } = req.params;
 
   if (!userId) {
-    return next(new ErrorHandler("UserId is not found.", 404));
+    return next(new ErrorHandler("UserId is not found.", 400));
   }
 
   const catchedItems = await redis.get(`userCartItem-${userId}`);
@@ -39,7 +39,7 @@ export const getCartCountByUserId = TryCatch(async (req, res, next) => {
   const { userId } = req.params;
 
   if (!userId) {
-    return next(new ErrorHandler("UserId is not found.", 404));
+    return next(new ErrorHandler("UserId is not found.", 400));
   }
 
   const catchedCartCounts = await redis.get(`userCartCounts-${userId}`);
@@ -66,7 +66,7 @@ export const getWallets = TryCatch(async (req, res, next) => {
   const { userId } = req.params;
 
   if (!userId) {
-    return next(new ErrorHandler("UserId is not found.", 404));
+    return next(new ErrorHandler("UserId is not found.", 400));
   }
 
   const catchedCheckoutWallets = await redis.get(`userCheckoutWallets-${userId}`);
@@ -100,7 +100,7 @@ export const createCart = TryCatch(async (req, res, next) => {
 
   
   if (!userId || !product || !quantity || !currentPrice || !totalAmount) {
-    return next(new ErrorHandler("Something is missing here.", 404));
+    return next(new ErrorHandler("Something is missing here.", 400));
   }
 
   const isAlreadyInCart = await Cart.findOne({$and: [{userId: userId}, {product: product}]});
@@ -123,7 +123,7 @@ export const deleteCart = TryCatch(async (req, res, next) => {
     const { cartId } = req.params;
 
     if (!cartId) {
-      return next(new ErrorHandler("CartId is not found.", 404));
+      return next(new ErrorHandler("CartId is not found.", 400));
     }
 
     const cart = await Cart.findByIdAndDelete(cartId);
@@ -140,7 +140,7 @@ export const updateCart = TryCatch(async (req, res, next) => {
         const { cartId } = req.body;
 
         if (!cartId) {
-            return next(new ErrorHandler("CartId is missing.", 404));
+            return next(new ErrorHandler("CartId is missing.", 400));
         }
 
         const cart = await Cart.findByIdAndUpdate(cartId, req.body);

@@ -8,7 +8,7 @@ export const getUserNotifications = TryCatch(async (req, res, next) => {
     const {userId} = req.params;
 
     if(!userId){
-        return next(new ErrorHandler("User ID not found", 404));
+        return next(new ErrorHandler("User ID not found", 400));
     }
 
     let catchedNtf = await redis.get(`userNotifications-${userId}`);
@@ -45,7 +45,7 @@ export const readUserNotifications = TryCatch(async (req, res, next) => {
     const {userId} = req.params;
 
     if(!userId){
-        return next(new ErrorHandler("User ID not found", 404));
+        return next(new ErrorHandler("User ID not found", 400));
     }
 
     await Notification.updateMany(

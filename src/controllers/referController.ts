@@ -14,7 +14,7 @@ export const userReferralEarning = TryCatch(async (req, res, next) => {
     const { userId } = req.params as {userId: string};
   
     if(!userId){
-      return next(new ErrorHandler("Something is missing", 404));
+      return next(new ErrorHandler("Something is missing", 400));
     }
   
     const user = await ReferMember.findOne({userId}).select("currentReferralEarning");
@@ -31,7 +31,7 @@ export const fetchUserDashboard = TryCatch(async (req, res, next) => {
     const { userId } = req.params as {userId: string};
   
     if(!userId){
-      return next(new ErrorHandler("Something is missing", 404));
+      return next(new ErrorHandler("Something is missing", 400));
     }
 
     const catchedUserDashboard = await redis.get(`userReferDashboard-${userId}`);
@@ -116,7 +116,7 @@ export const fetchUserShortDashboard = TryCatch(async (req, res, next) => {
     const { userId } = req.params as {userId: string};
   
     if(!userId){
-      return next(new ErrorHandler("Something is missing", 404));
+      return next(new ErrorHandler("Something is missing", 400));
     }
 
     const catchedUserDashboard = await redis.get(`userReferShortDashboard-${userId}`);

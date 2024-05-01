@@ -21,7 +21,7 @@ export const fetchUserProfile = TryCatch(async (req, res, next) => {
 
   
   if (!userId) {
-    return next(new ErrorHandler("Something is missing here", 404));
+    return next(new ErrorHandler("Something is missing here", 400));
   }
 
   const catchedUserProfile = await redis.get(`userProfile-${userId}`);
@@ -62,7 +62,7 @@ export const fetchUserAddresses = TryCatch(async (req, res, next) => {
   const { userId } = req.params;
 
   if (!userId) {
-    return next(new ErrorHandler("Something is missing here.", 404));
+    return next(new ErrorHandler("Something is missing here.", 400));
   }
 
   const catchedAddresses = await redis.get(`userAddresses-${userId}`);
@@ -90,7 +90,7 @@ export const fetchUsertransactions = TryCatch(async (req, res, next) => {
   const { userId } = req.params;
 
   if (!userId) {
-    return next(new ErrorHandler("Something is missing here.", 404));
+    return next(new ErrorHandler("Something is missing here.", 400));
   }
 
   // const catchedTransactions = await redis.get(`userTransactions-${userId}`);
@@ -118,7 +118,7 @@ export const addUserAddress = TryCatch(async (req, res, next) => {
   const address = req.body as CUserDeliveryAddressType;
 
   if(!address){
-    return next(new ErrorHandler("Something is missing in the address.", 404));
+    return next(new ErrorHandler("Something is missing in the address.", 400));
   }
 
   await DeliveryAddress.create({...address, type: address.type.toLowerCase()});
@@ -135,7 +135,7 @@ export const deleteUserAddress = TryCatch(async (req, res, next) => {
   const {addressId} = req.body;
 
   if(!addressId){
-    return next(new ErrorHandler("Address Id is missing", 404));
+    return next(new ErrorHandler("Address Id is missing", 400));
   }
 
   const deletedAddress = await DeliveryAddress.findByIdAndDelete(addressId);
@@ -152,7 +152,7 @@ export const updateUserAddress = TryCatch(async (req, res, next) => {
   const address = req.body as CUserDeliveryAddressType;
 
   if(!address){
-    return next(new ErrorHandler("Something is missing in the address.", 404));
+    return next(new ErrorHandler("Something is missing in the address.", 400));
   }
 
   await DeliveryAddress.findByIdAndUpdate(address._id, address, {new: true});
@@ -169,7 +169,7 @@ export const fetchUserWishlist = TryCatch(async (req, res, next) => {
   const { userId } = req.params;
 
   if (!userId) {
-    return next(new ErrorHandler("Something is missing here.", 404));
+    return next(new ErrorHandler("Something is missing here.", 400));
   }
 
   const catchedWishlist = await redis.get(`userWishlist-${userId}`);
@@ -200,7 +200,7 @@ export const createUserWishlistItems = TryCatch(async (req, res, next) => {
   const { userId, productId } = req.body;
 
   if (!userId) {
-    return next(new ErrorHandler("Something is missing here.", 404));
+    return next(new ErrorHandler("Something is missing here.", 400));
   }
 
   let wishlistItems;
@@ -227,7 +227,7 @@ export const fetchUserWishlistItems = TryCatch(async (req, res, next) => {
   const { userId } = req.params;
 
   if (!userId) {
-    return next(new ErrorHandler("Something is missing here.", 404));
+    return next(new ErrorHandler("Something is missing here.", 400));
   }
 
   const wishlistItems = await Wishlist.findOne({ userId }).select("-userId");
@@ -243,7 +243,7 @@ export const deleteUserWishlistItems = TryCatch(async (req, res, next) => {
   const { userId, productId } = req.body;
 
   if (!userId) {
-    return next(new ErrorHandler("Something is missing here.", 404));
+    return next(new ErrorHandler("Something is missing here.", 400));
   }
 
   await redis.del(`userWishlist-${userId}`);
@@ -260,7 +260,7 @@ export const addUserWishlist = TryCatch(async (req, res, next) => {
   const {userId, product} = req.body as CWishlistType;
 
   if(!product || !userId){
-    return next(new ErrorHandler("Something is missing in the review.", 404));
+    return next(new ErrorHandler("Something is missing in the review.", 400));
   }
 
   await Wishlist.findOneAndUpdate({userId}, {$push: {products: product}});
@@ -276,7 +276,7 @@ export const fetchUserGiftCards = TryCatch(async (req, res, next) => {
   const { userId } = req.query;
 
   if (!userId) {
-    return next(new ErrorHandler("Something is missing here.", 404));
+    return next(new ErrorHandler("Something is missing here.", 400));
   }
 
   const giftCards = await GiftCard.find({ gifterId: userId }).select(
@@ -294,7 +294,7 @@ export const fetchUserSavedCards = TryCatch(async (req, res, next) => {
   const { userId } = req.query;
 
   if (!userId) {
-    return next(new ErrorHandler("Something is missing here.", 404));
+    return next(new ErrorHandler("Something is missing here.", 400));
   }
 
   const cards = await Card.find({ userId }).select(
@@ -312,7 +312,7 @@ export const fetchUserWallets = TryCatch(async (req, res, next) => {
   const { userId } = req.query;
 
   if (!userId) {
-    return next(new ErrorHandler("Something is missing here.", 404));
+    return next(new ErrorHandler("Something is missing here.", 400));
   }
 
   const wallets = await User.findById(userId).select("mainBalance coinBalance");
@@ -348,7 +348,7 @@ export const fetchUserRatingAndReviews = TryCatch(async (req, res, next) => {
   const { userId } = req.query;
 
   if (!userId) {
-    return next(new ErrorHandler("Something is missing here.", 404));
+    return next(new ErrorHandler("Something is missing here.", 400));
   }
 
   const ratingAndReviews = await RatingAndReviews.find({ userId }).populate({
@@ -367,7 +367,7 @@ export const fetchUserNotifications = TryCatch(async (req, res, next) => {
   const { userId } = req.query;
 
   if (!userId) {
-    return next(new ErrorHandler("Something is missing here.", 404));
+    return next(new ErrorHandler("Something is missing here.", 400));
   }
 
   const ntfs = await Notification.find({ userId });
@@ -383,7 +383,7 @@ export const fetchUserReferralDashboard = TryCatch(async (req, res, next) => {
     const { userId } = req.query;
 
     if (!userId) {
-      return next(new ErrorHandler("Something is missing here.", 404));
+      return next(new ErrorHandler("Something is missing here.", 400));
     }
 
     const referMemeberData = await ReferMember.findOne({ userId }).select(
@@ -435,7 +435,7 @@ export const addGiftCard = TryCatch(async (req, res, next) => {
   const giftCard = req.body as CGiftCardType;
 
   if(!giftCard){
-    return next(new ErrorHandler("Something is missing in the GiftCard.", 404));
+    return next(new ErrorHandler("Something is missing in the GiftCard.", 400));
   }
 
 
@@ -449,7 +449,7 @@ export const addUserCard = TryCatch(async (req, res, next) => {
   const userCard = req.body as CUserCardType;
 
   if(!userCard){
-    return next(new ErrorHandler("Something is missing in the card information.", 404));
+    return next(new ErrorHandler("Something is missing in the card information.", 400));
   }
 
   await Card.create(userCard);
@@ -464,7 +464,7 @@ export const addUserReview = TryCatch(async (req, res, next) => {
   const review = req.body as CRatingAndReviewsType;
 
   if(!review){
-    return next(new ErrorHandler("Something is missing in the review.", 404));
+    return next(new ErrorHandler("Something is missing in the review.", 400));
   }
 
   await RatingAndReviews.create(review);
@@ -479,7 +479,7 @@ export const updateUserPassword = TryCatch(async (req, res, next) => {
   const {userId, password, newPassword} = req.body as UpdateUserPasswordType;
 
   if(!userId || !password || !newPassword){
-    return next(new ErrorHandler("Something is missing", 404));
+    return next(new ErrorHandler("Something is missing", 400));
   }
 
   const user = await User.findById(userId);

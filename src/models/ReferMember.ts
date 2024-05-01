@@ -7,6 +7,7 @@ interface ReferMemberType extends Document {
   totalReferralEarning: number;
   referredUserReferCode: string;
   referCode: string;
+  holdAmount: number,
   createdAt: Date;
   updatedAt: Date;
 }
@@ -17,6 +18,7 @@ const referMemberSchema: Schema<ReferMemberType> = new Schema({
   currentReferralEarning: { type: Number, default: 0 },
   totalReferralEarning: { type: Number, default: 0 },
   referredUserReferCode: { type: String },
+  holdAmount: { type: Number, default: 0 },
   referCode: { type: String, required: true, unique: true }
 }, {
     timestamps: true

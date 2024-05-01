@@ -36,7 +36,7 @@ export const signup = TryCatch(async (req, res, next) => {
   if(newUser.referredUserReferCode){
     const isReferredUserReferCodeIsValid = await ReferMember.findOne({ referCode: newUser.referredUserReferCode });
     if(!isReferredUserReferCodeIsValid){
-      return next(new ErrorHandler("Referral code is incorrect", 404));
+      return next(new ErrorHandler("Referral code is incorrect", 401));
     }
   }
     
@@ -52,7 +52,7 @@ export const signup = TryCatch(async (req, res, next) => {
   }
 
   if(!gender){
-    return res.status(404).json({
+    return res.status(400).json({
       success: false,
       message: "Enter atleast first character of gender"
     });
@@ -92,7 +92,7 @@ export const sendOTP = TryCatch(async (req, res, next) => {
   const user: UserType | null = await User.findById(userId);
 
   if (!user) {
-    return next(new ErrorHandler("User not found.", 404));
+    return next(new ErrorHandler("User not found.", 400));
   }
 
   let saltRoundString: string | undefined = process.env.BCRYPT_SALT_ROUND;
@@ -311,7 +311,7 @@ export const resetPassword = TryCatch(async (
     }
 
     if (!token || !newPassword || !otp) {
-      return next(new ErrorHandler("Something is missing.", 404));
+      return next(new ErrorHandler("Something is missing.", 400));
     }
 
     if (!jwtSecretKey) {
@@ -361,7 +361,7 @@ export const resendOTP = TryCatch(async (
 
     if (!token) {
       console.log(token)
-      return next(new ErrorHandler("Something is missing.", 404));
+      return next(new ErrorHandler("Something is missing.", 400));
     }
 
     if (!jwtSecretKey) {

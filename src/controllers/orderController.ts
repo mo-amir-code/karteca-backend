@@ -14,7 +14,7 @@ export const fetchUserOrder = TryCatch(async (req, res, next) => {
   const { userId } = req.params;
 
   if (!userId) {
-    return next(new ErrorHandler("Something is missing here.", 404));
+    return next(new ErrorHandler("Something is missing here.", 400));
   }
 
   const catchedOrders = await redis.get(`userOrders-${userId}`);
@@ -89,11 +89,11 @@ export const createOrders = TryCatch(async (req, res, next) => {
   const {orders, paymentMode, userId, wallet} = req.body as {paymentMode: "online" | "cash" , orders:[CPaymentOrderType], userId:string, wallet?:{name:string, amount:number}};
 
   if (!(orders.length > 0)) {
-    return next(new ErrorHandler("Orders are missing.", 404));
+    return next(new ErrorHandler("Orders are missing.", 400));
   }
 
   if(!orders[0].deliveryAddress){
-    return next(new ErrorHandler("Delivery address is required", 404));
+    return next(new ErrorHandler("Delivery address is required", 400));
   }
 
   let totalAmount: number = orders.reduce(

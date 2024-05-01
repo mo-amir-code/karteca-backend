@@ -11,7 +11,7 @@ interface TxnVerifyRequestType extends Document {
 const txnVerifyRequestSchema: Schema<TxnVerifyRequestType> = new Schema({
     userId: {type: Schema.Types.ObjectId, ref: "User", required: true},
     transactionId: {type: String, required: true},
-    amount: {type: Number, required: true},
+    amount: {type: Number, required: true}
 },
 {
     timestamps: true

@@ -4,7 +4,7 @@ import Cart from "../models/Cart.js";
 import ReferMember from "../models/ReferMember.js";
 import ReferralLevel from "../models/ReferralLevel.js";
 import Transaction from "../models/Transaction.js";
-import { CancelPaymentType, CreateSubscriptionType, VerifyPaymentBodyType, VerifyPaymentRequestType } from "../types/payment.js";
+import { CancelPaymentType, CreateSubscriptionType, VerifyPaymentBodyType, VerifyPaymentRequestType, WithdrawalRequestType } from "../types/payment.js";
 // import { calculateSHA256 } from "../utils/services.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { redis } from "../utils/Redis.js";
@@ -14,13 +14,14 @@ import TxnVerifyRequest from "../models/TxnVerifyRequest.js";
 import { MailOptions, sendMail } from "../utils/sendOTP.js";
 import Subscription from "../models/Subscription.js"
 import { makePayment } from "../middlewares/payment.js";
+import WithdrawalRequest from "../models/WithdrawalRequest.js";
 
 export const verifyPayment = TryCatch(async (req, res, next) => {
   const { paymentStatus, transactionId, userTransactionId, isFrom } =
     req.body as VerifyPaymentBodyType;
 
   if(!paymentStatus || !transactionId || !userTransactionId){
-    return next(new ErrorHandler("Enter all required field(s)", 404))
+    return next(new ErrorHandler("Enter all required field(s)", 400))
   }
 
   // updating user transaction
@@ -250,7 +251,7 @@ export const verifyPaymentRequest = TryCatch(async (req, res, next) => {
   const { amount, userId, transactionId, isFrom } = req.body as VerifyPaymentRequestType;
 
   if(!amount || !userId || !transactionId){
-    return next(new ErrorHandler("Required fields is/are empty", 404));
+    return next(new ErrorHandler("Required fields is/are empty", 400));
   }
 
   await TxnVerifyRequest.create({ amount, userId, transactionId });
@@ -288,7 +289,7 @@ export const cancelPayment = TryCatch(async (req, res, next) => {
   const { transactionId } = req.body as CancelPaymentType;
 
   if(!transactionId){
-    return next(new ErrorHandler("Required fields is/are empty", 404));
+    return next(new ErrorHandler("Required fields is/are empty", 400));
   }
 
   await Transaction.findByIdAndUpdate(transactionId, { status: "cancelled" });
@@ -305,7 +306,7 @@ export const createSubscription = TryCatch(async (req, res, next) => {
   const user = await User.findById(userId);
 
   if(!userId || !amount || !type || !user){
-    return next(new ErrorHandler("Required field(s) is/are missing", 404));
+    return next(new ErrorHandler("Required field(s) is/are missing", 400));
   }
 
   const txnData = {
@@ -332,4 +333,59 @@ export const createSubscription = TryCatch(async (req, res, next) => {
     }
   });
 
+});
+
+export const withdrawalRequest = TryCatch(async (req, res, next) => {
+  const { amount, userId, upi } = req.body as WithdrawalRequestType;
+
+  if(!amount || !userId || !upi){
+    return next(new ErrorHandler("Required field(s) is/are missing", 400));
+  }
+
+  const isExist = await User.findById(userId).select("_id");
+  
+  if(!isExist){
+    return next(new ErrorHandler("Enter valid user id", 401));
+  }
+  
+
+  const referMember = await ReferMember.findOne({ userId });
+
+  if(!referMember){
+    return next(new ErrorHandler("Something went wrong!", 401));
+  }
+
+  if(amount < referMember.currentReferralEarning){
+    return next(new ErrorHandler("Something went wrong!", 401));
+  }
+
+  referMember.currentReferralEarning -= amount;
+  referMember.holdAmount += amount;
+  await referMember.save();
+
+  const withdrawalRequestData = {
+    userId,
+    amount,
+    to: {
+      upi
+    }
+  }
+
+  await WithdrawalRequest.create(withdrawalRequestData);
+
+  await Notification.create({
+    userId,
+    message: `Withdrawal request has been sent and ₹${amount} on hold until withdrawal verification`,
+    type: "payment"
+  });
+
+  await redis.del(`userNotifications-${userId}`);
+  await redis.del(`userReferDashboard-${userId}`);
+  await redis.del(`userReferShortDashboard-${userId}`);
+  await redis.del(`userCheckoutWallets-${userId}`);
+
+  return res.status(200).json({
+    success: true,
+    message: "Withdrawal request has been sent"
+  });
 });
