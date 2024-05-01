@@ -355,7 +355,7 @@ export const withdrawalRequest = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("Something went wrong!", 401));
   }
 
-  if(amount < referMember.currentReferralEarning){
+  if(amount > referMember.currentReferralEarning){
     return next(new ErrorHandler("Something went wrong!", 401));
   }
 
