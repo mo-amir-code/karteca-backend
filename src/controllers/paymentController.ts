@@ -291,7 +291,7 @@ export const verifyPaymentRequest = TryCatch(async (req, res, next) => {
       from:'Karteca Pvt. Ltd.',
       to: usersMailId,
       subject: `Payment Verification Request for ${isFrom === "subscription"? "Subscription" : "Shopping"}`,
-      html: `You got a new payment verification request for ₹${amount}}`,
+      html: `You got a new payment verification request for ₹${amount}`,
   }
 
   await sendMail(mailData);
