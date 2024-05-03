@@ -1,5 +1,5 @@
 import express, { Router } from "express"
-import { cancelPayment, createSubscription, verifyPayment, verifyPaymentRequest, withdrawalRequest } from "../controllers/paymentController.js";
+import { cancelPayment, createSubscription, verifyPayment, verifyPaymentRequest, withdrawalRequest, withdrawalRequestVerification } from "../controllers/paymentController.js";
 
 const router: Router = express.Router()
 
@@ -9,5 +9,6 @@ router
    .patch("/cancel", cancelPayment)
    .post("/subscription", createSubscription)
    .post("/withdrawal", withdrawalRequest)
+   .patch("/withdrawal/verify", withdrawalRequestVerification)
 
 export default router;

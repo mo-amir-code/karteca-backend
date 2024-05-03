@@ -4,7 +4,7 @@ import Cart from "../models/Cart.js";
 import ReferMember from "../models/ReferMember.js";
 import ReferralLevel from "../models/ReferralLevel.js";
 import Transaction from "../models/Transaction.js";
-import { CancelPaymentType, CreateSubscriptionType, VerifyPaymentBodyType, VerifyPaymentRequestType, WithdrawalRequestType } from "../types/payment.js";
+import { CancelPaymentType, CreateSubscriptionType, VerifyPaymentBodyType, VerifyPaymentRequestType, WithdrawalRequestType, WithdrawalRequestVerificationType } from "../types/payment.js";
 // import { calculateSHA256 } from "../utils/services.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { redis } from "../utils/Redis.js";
@@ -406,4 +406,45 @@ export const withdrawalRequest = TryCatch(async (req, res, next) => {
     success: true,
     message: "Amount will be sent to your upi id under 6 hours"
   });
+});
+
+export const withdrawalRequestVerification = TryCatch(async (req, res, next) => {
+  const { upi, utrId, withdrawalRequestId, withdrawalStatus } = req.body as WithdrawalRequestVerificationType;
+
+  if(!upi || !utrId || !withdrawalRequestId || !withdrawalStatus){
+    return next(new ErrorHandler("Required fields is/are empty", 400));
+  }
+
+  const withdrawalRequest = await WithdrawalRequest.findByIdAndUpdate(withdrawalRequestId, { 
+    utrId,
+    status: "success",
+    from:{
+      upi
+    }
+   });
+
+   await Transaction.create({
+    userId: withdrawalRequest.userId,
+    type: "withdrawal",
+    mode: "referral",
+    utrId,
+    amount: withdrawalRequest.amount,
+    status: "success"
+   });
+
+   await Notification.create({
+    userId: withdrawalRequest.userId,
+    message: `₹${withdrawalRequest.amount} has been sent to your upi id`,
+    type: "payment"
+   });
+
+   await redis.del(`userNotifications-${withdrawalRequest.userId}`);
+   await redis.del(`userTransactions-${withdrawalRequest.userId}`);
+
+
+   return res.status(200).json({
+    success: true,
+    message: "Updated"
+   });
+
 });
