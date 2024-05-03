@@ -199,8 +199,7 @@ export const verify = TryCatch(async (req, res, next) => {
       data: {
         userId: user._id,
         name: user.name,
-        referCode: user.referCode,
-        earning: user.referralEarning,
+        role: user.role
       },
     });
 });
@@ -263,7 +262,8 @@ export const signin = TryCatch(async (req, res, next) => {
       message: "You are logged in. Enjoy!",
       data: {
         userId:user._id,
-        name:user.name
+        name:user.name,
+        role: user.role
       },
     });
 });

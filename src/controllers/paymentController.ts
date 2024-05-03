@@ -17,21 +17,19 @@ import { makePayment } from "../middlewares/payment.js";
 import WithdrawalRequest from "../models/WithdrawalRequest.js";
 
 export const verifyPayment = TryCatch(async (req, res, next) => {
-  const { paymentStatus, transactionId, userTransactionId, isFrom } =
+  const { paymentStatus, utrId, isFrom, adminNote } =
     req.body as VerifyPaymentBodyType;
 
-  if(!paymentStatus || !transactionId || !userTransactionId){
+  if(!paymentStatus || !utrId){
     return next(new ErrorHandler("Enter all required field(s)", 400))
   }
 
   // updating user transaction
-  const transaction = await Transaction.findByIdAndUpdate(transactionId, {
-    status: "processing",
-  });
+  const transaction = await Transaction.findOne({ utrId });
 
   if(transaction){
     transaction.status = paymentStatus;
-    transaction.transactionId = userTransactionId;
+    // transaction.transactionId = userTransactionId;
   }
 
   if(paymentStatus !== "success" && transaction) {
@@ -50,8 +48,12 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
     await transaction.save();
     // ENd with update
 
+
+
+
     if (isFrom === "subscription") {
 
+      // Creating subscription
       const subsData = {
         userId: mainUserId,
         type: "premium",
@@ -60,6 +62,14 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
       }
 
       await Subscription.create(subsData);
+      // end of subscription
+
+      // Updating transaciton verify request from pending/processing to verified
+      await TxnVerifyRequest.findOneAndUpdate({ utrId },  { status: "verified", admin: {
+        adminId: mainUserId,
+        adminNote
+      } });
+      // end of transaction verify request
 
       let level = 1; // initializing level
 
@@ -172,6 +182,13 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
       });
     }
 
+    // Updating transaciton verify request from pending/processing to verified
+    await TxnVerifyRequest.findOneAndUpdate({ utrId },  { status: "verified", admin: {
+      adminId: mainUserId,
+      adminNote
+    } });
+    // end of transaction verify request
+
     await Cart.deleteMany({ userId: transaction?.userId });
 
     const wallet = transaction?.wallet as
@@ -248,13 +265,14 @@ const getLevelWiseMoney = (level: number, amount: number) => {
 };
 
 export const verifyPaymentRequest = TryCatch(async (req, res, next) => {
-  const { amount, userId, transactionId, isFrom } = req.body as VerifyPaymentRequestType;
+  const { amount, userId, utrId, transactionId, isFrom } = req.body as VerifyPaymentRequestType;
 
-  if(!amount || !userId || !transactionId){
+  if(!amount || !userId || !utrId || !transactionId){
     return next(new ErrorHandler("Required fields is/are empty", 400));
   }
 
-  await TxnVerifyRequest.create({ amount, userId, transactionId });
+  await TxnVerifyRequest.create({ amount, userId, utrId, type: isFrom });
+  await Transaction.findByIdAndUpdate(transactionId, { utrId });
 
   await Notification.create({
     userId,

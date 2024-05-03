@@ -8,7 +8,7 @@ interface TransactionType extends Document {
     name: { type: String },
     amount: { type: Number }
   }
-  transactionId: string,
+  utrId: string,
   paymentQrCodeUrl: string,
   amount: number;
   status: "pending" | "processing" | "failed" | "success";
@@ -34,7 +34,7 @@ const transactionSchema: Schema<TransactionType> = new Schema<TransactionType>(
       name: { type: String },
       amount: { type: Number }
     },
-    transactionId: { type: String },
+    utrId: { type: String },
     paymentQrCodeUrl: { type: String },
     amount: { type: Number, required: true },
     status: {
