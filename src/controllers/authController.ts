@@ -12,6 +12,7 @@ import ErrorHandler from "../utils/utility-class.js";
 import ReferMember from "../models/ReferMember.js";
 import { redis } from "../utils/Redis.js";
 import ReferralLevelModel from "../models/ReferralLevel.js";
+import { COOKIE_AGE_15_MIN, COOKIE_AGE_4_DAY, JWT_AGE_15_MIN, JWT_AGE_4_DAYS, JWT_ALGO } from "../utils/constants.js";
 
 export type MiddleRequestType = {
   userId: string;
@@ -102,7 +103,7 @@ export const sendOTP = TryCatch(async (req, res, next) => {
   }
 
   const otp: number = generateOTP();
-  const otpToken: string = jwt.sign({ userId: user._id }, jwtSecretKey);
+  const otpToken: string = jwt.sign({ userId: user._id }, jwtSecretKey, { expiresIn:JWT_AGE_15_MIN });
 
   let mailOption: MailOptions;
 
@@ -132,7 +133,7 @@ export const sendOTP = TryCatch(async (req, res, next) => {
   await user.save();
 
   res.cookie("otptoken", otpToken, {
-    maxAge:  15 * 60 * 1000, // 15 minutes
+    maxAge:  COOKIE_AGE_15_MIN, // 15 minutes
     domain: process.env.ROOT_DOMAIN, // Set to the root domain
     secure: true, // Ensure the cookie is sent only over HTTPS
     httpOnly: true,  // Makes the cookie accessible only via HTTP(S) requests, not JavaScript 
@@ -176,10 +177,10 @@ export const verify = TryCatch(async (req, res, next) => {
       return next(new ErrorHandler("OTP is expired.", 400));
     }
 
-    const sessionToken = jwt.sign({ userId }, jwtSecretKey);
+    const sessionToken = jwt.sign({ userId }, jwtSecretKey, { expiresIn:JWT_AGE_15_MIN } );
 
     res.cookie("sessiontoken", sessionToken, {
-      maxAge: 4 * 24 * 60 * 60 * 1000, // 4 days
+      maxAge: COOKIE_AGE_4_DAY, // 4 days
       domain: process.env.ROOT_DOMAIN, // Set to the root domain
       secure: true, // Ensure the cookie is sent only over HTTPS
       httpOnly: true,  // Makes the cookie accessible only via HTTP(S) requests, not JavaScript 
@@ -241,13 +242,13 @@ export const signin = TryCatch(async (req, res, next) => {
       return next(new ErrorHandler("Internal Error Occurred!", 400));
     }
 
-    const sessionToken: string = jwt.sign({ userId: user._id }, jwtSecretKey);
+    const sessionToken: string = jwt.sign({ userId: user._id }, jwtSecretKey, { expiresIn:JWT_AGE_15_MIN });
     user.sessionToken = sessionToken;
     await user.save();
 
 
     res.cookie("sessiontoken", sessionToken, {
-      maxAge: 4 * 24 * 60 * 60 * 1000, // 4 days
+      maxAge: COOKIE_AGE_4_DAY, // 4 days
       domain: process.env.ROOT_DOMAIN, // Set to the root domain
       secure: true, // Ensure the cookie is sent only over HTTPS
       httpOnly: true,  // Makes the cookie accessible only via HTTP(S) requests, not JavaScript 
