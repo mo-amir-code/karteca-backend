@@ -1,4 +1,4 @@
-import express, { Express, NextFunction, RequestHandler } from "express";
+import express, {Express} from "express";
 import cookieParser from "cookie-parser";
 import routers from "./routers/index.js";
 import { connectToMongo } from "./utils/mongoDB.js";
@@ -9,8 +9,16 @@ import { createCategoriesWithImage, createProducts } from "./utils/createProduct
 
 const app: Express = express();
 
+const whitelist = [process.env.CLIENT_ORIGIN]
+
 const corsOptions = {
-    origin: process.env.CLIENT_ORIGIN, 
+    origin: function (origin:any, callback:any) {
+        if (whitelist.indexOf(origin) !== -1) {
+          callback(null, true)
+        } else {
+          callback(new Error('You are very chalak bro.....'))
+        }
+      }, 
     credentials: true, // Allow cookies
 };
 
