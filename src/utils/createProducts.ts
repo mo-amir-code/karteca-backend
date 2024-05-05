@@ -11,8 +11,14 @@ interface ProductType{
   colors: string[];
   discount: number;
   sold: number;
-  thumbnail: string;
-  images: string[];
+  thumbnail: {
+    url:string,
+    publicId:string
+  };
+  images: {
+    url:string,
+    publicId:string
+  }[];
   category:{
     parent: string,
     child: string
@@ -79,8 +85,32 @@ export const createProducts = async (count:number) => {
             colors: [faker.color.rgb(), faker.color.rgb(), faker.color.rgb(), faker.color.rgb(), faker.color.rgb()],
             discount: faker.number.int(50),
             sold: faker.number.int(100),
-            thumbnail: images[faker.number.int(5) || 0],
-            images: images,
+            thumbnail: {
+                url: images[faker.number.int(5) || 0],
+                publicId: "ssdsd"
+            },
+            images: [
+                {
+                    url: images[0],
+                    publicId: "!212"
+                },
+                {
+                    url: images[1],
+                    publicId: "!212"
+                },
+                {
+                    url: images[2],
+                    publicId: "!212"
+                },
+                {
+                    url: images[3],
+                    publicId: "!212"
+                },
+                {
+                    url: images[4],
+                    publicId: "!212"
+                },
+            ],
             category: {
                 parent: parentCat,
                 child: categories[parentCat][faker.number.int(8)]
@@ -117,41 +147,49 @@ export const createProducts = async (count:number) => {
 export const createCategoriesWithImage = async () => {
     const images = [
         {
-            parent:"smartwatch",
-            parentImage: "https://res.cloudinary.com/doidnfajd/image/upload/v1712744946/categories/rsp9wilxqwnfajkg4yco.png"
+            name:"smartwatch",
+            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712744946/categories/rsp9wilxqwnfajkg4yco.png"
         },
         {
-            parent:"smartphone",
-            parentImage: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746703/categories/dj7ekkki5yat78ok1nhx.png"
+            name:"smartphone",
+            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746703/categories/dj7ekkki5yat78ok1nhx.png"
         },
         {
-            parent:"phone",
-            parentImage: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746703/categories/dj7ekkki5yat78ok1nhx.png"
+            name:"phone",
+            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746703/categories/dj7ekkki5yat78ok1nhx.png"
         },
         {
-            parent:"refrigerator",
-            parentImage: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746705/categories/nb9h3uajuxjzvhgp1yop.png"
+            name:"refrigerator",
+            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746705/categories/nb9h3uajuxjzvhgp1yop.png"
         },
         {
-            parent:"laptop",
-            parentImage: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746704/categories/avzfverw8y9rj0reztxq.png"
+            name:"laptop",
+            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746704/categories/avzfverw8y9rj0reztxq.png"
         },
         {
-            parent:"tablet",
-            parentImage: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746703/categories/tcsybxadzqk1opqrf4ju.png"
+            name:"tablet",
+            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746703/categories/tcsybxadzqk1opqrf4ju.png"
         },
         {
-            parent:"gamesconsole",
-            parentImage: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746705/categories/xw4ejenjmwucxfp7vbpt.png"
+            name:"gamesconsole",
+            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746705/categories/xw4ejenjmwucxfp7vbpt.png"
         },
         {
-            parent:"camera",
-            parentImage: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746704/categories/wjciswzj0vivr5b2fosn.png"
+            name:"camera",
+            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746704/categories/wjciswzj0vivr5b2fosn.png"
         },
         {
-            parent:"drone",
-            parentImage: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746704/categories/olgsju9cespaagm07dzn.png"
+            name:"drone",
+            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746704/categories/olgsju9cespaagm07dzn.png"
         },
     ]
-    await CategoriesWithImage.create({categories:images}).then(()=>console.log("Categories created")).catch(() => console.log("Error while creating categories"));
+
+    
+    try {
+        images.map(async (category) => {
+            await CategoriesWithImage.create({parent:category, childs: images});
+        });
+    } catch (error) {
+        console.log(error)
+    }
 }

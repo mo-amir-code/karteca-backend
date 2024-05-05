@@ -1,27 +1,34 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-interface ProductType extends Document {
-  categories: CategoryType[];
+interface CategoryType extends Document {
+  parent: {
+    name: string,
+    image: string
+  },
+  childs: ChildCategoryType[]
   createdAt: Date;
   updatedAt: Date;
 }
 
-interface CategoryType {
-    parent: string;
-    child?: string;
-    parentImage: string;
-    childImage?: string;
+type ChildCategoryType = {
+  name: string,
+  image: string,
+  publicId: string
 }
 
-const CategoriesImageSchema: Schema<ProductType> = new Schema(
+const CategoriesImageSchema: Schema<CategoryType> = new Schema(
   {
-    categories: [
-        {
-            parent: { type: String, required: true },
-            child: { type: String },
-            parentImage: { type: String, required: true },
-            childImage: { type: String }
-        }
+    parent: {
+      name: { type: String, required: true },
+      image: { type: String, required: true },
+      publicId: { type: String, required: true },
+    },
+    childs: [
+      {
+        name: { type: String, required: true },
+        image: { type: String, required: true },
+        publicId: { type: String, required: true }
+      }
     ]
   },
   {
@@ -30,4 +37,4 @@ const CategoriesImageSchema: Schema<ProductType> = new Schema(
 );
 
 export default mongoose.models.CategoriesImage ||
-  mongoose.model<ProductType>("CategoriesImage", CategoriesImageSchema);
+  mongoose.model<CategoryType>("CategoriesWithImage", CategoriesImageSchema);

@@ -9,32 +9,44 @@ import Notification from "../models/Notification.js";
 import Wishlist from "../models/Wishlist.js";
 import ReferralLevel from "../models/ReferralLevel.js";
 import Transaction from "../models/Transaction.js";
-import { getEarningLevelWise } from "../utils/services.js";
+import {
+  calculateRatingAndReviews,
+  getEarningLevelWise,
+} from "../utils/services.js";
 import { TryCatch } from "../middlewares/error.js";
 import ErrorHandler from "../utils/utility-class.js";
-import { CGiftCardType, CRatingAndReviewsType, CUserCardType, CUserDeliveryAddressType, CWishlistType, UpdateUserPasswordType, UserEditType } from "../types/user.js";
+import {
+  CGiftCardType,
+  CRatingAndReviewsType,
+  CUserCardType,
+  CUserDeliveryAddressType,
+  CWishlistType,
+  UpdateUserPasswordType,
+  UserEditType,
+} from "../types/user.js";
 import { redis } from "../utils/Redis.js";
-import bcrypt from "bcrypt"
+import bcrypt from "bcrypt";
 
 export const fetchUserProfile = TryCatch(async (req, res, next) => {
   const { userId } = req.params;
 
-  
   if (!userId) {
     return next(new ErrorHandler("Something is missing here", 400));
   }
 
   const catchedUserProfile = await redis.get(`userProfile-${userId}`);
 
-  if(catchedUserProfile){
+  if (catchedUserProfile) {
     return res.status(200).json({
       success: true,
       message: "User information fetched.",
-      data: JSON.parse(catchedUserProfile)
+      data: JSON.parse(catchedUserProfile),
     });
   }
 
-  const user = await User.findById(userId).select("_id name gender email phone");
+  const user = await User.findById(userId).select(
+    "_id name gender email phone"
+  );
 
   await redis.set(`userProfile-${userId}`, JSON.stringify(user));
 
@@ -67,11 +79,11 @@ export const fetchUserAddresses = TryCatch(async (req, res, next) => {
 
   const catchedAddresses = await redis.get(`userAddresses-${userId}`);
 
-  if(catchedAddresses){
+  if (catchedAddresses) {
     return res.status(200).json({
       success: true,
       message: "User addresses fetched.",
-      data: JSON.parse(catchedAddresses)
+      data: JSON.parse(catchedAddresses),
     });
   }
 
@@ -103,7 +115,9 @@ export const fetchUsertransactions = TryCatch(async (req, res, next) => {
   //   });
   // }
 
-  const transactions = (await Transaction.find({ userId }).select("wallet status amount createdAt")).reverse();
+  const transactions = (
+    await Transaction.find({ userId }).select("wallet status amount createdAt")
+  ).reverse();
 
   await redis.set(`userTransactions-${userId}`, JSON.stringify(transactions));
 
@@ -117,24 +131,27 @@ export const fetchUsertransactions = TryCatch(async (req, res, next) => {
 export const addUserAddress = TryCatch(async (req, res, next) => {
   const address = req.body as CUserDeliveryAddressType;
 
-  if(!address){
+  if (!address) {
     return next(new ErrorHandler("Something is missing in the address.", 400));
   }
 
-  await DeliveryAddress.create({...address, type: address.type.toLowerCase()});
+  await DeliveryAddress.create({
+    ...address,
+    type: address.type.toLowerCase(),
+  });
 
   await redis.del(`userAddresses-${address.userId}`);
 
   return res.status(200).json({
     success: true,
-    message: "Delivery address added successfully."
+    message: "Delivery address added successfully.",
   });
 }); // redis done
 
 export const deleteUserAddress = TryCatch(async (req, res, next) => {
-  const {addressId} = req.body;
+  const { addressId } = req.body;
 
-  if(!addressId){
+  if (!addressId) {
     return next(new ErrorHandler("Address Id is missing", 400));
   }
 
@@ -144,24 +161,24 @@ export const deleteUserAddress = TryCatch(async (req, res, next) => {
 
   return res.status(200).json({
     success: true,
-    message: "Address deleted successfully."
+    message: "Address deleted successfully.",
   });
 }); // redis done
 
 export const updateUserAddress = TryCatch(async (req, res, next) => {
   const address = req.body as CUserDeliveryAddressType;
 
-  if(!address){
+  if (!address) {
     return next(new ErrorHandler("Something is missing in the address.", 400));
   }
 
-  await DeliveryAddress.findByIdAndUpdate(address._id, address, {new: true});
+  await DeliveryAddress.findByIdAndUpdate(address._id, address, { new: true });
 
   await redis.del(`userAddresses-${address.userId}`);
 
   return res.status(200).json({
     success: true,
-    message: "Delivery address updated successfully."
+    message: "Delivery address updated successfully.",
   });
 }); // redis done
 
@@ -172,27 +189,69 @@ export const fetchUserWishlist = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("Something is missing here.", 400));
   }
 
-  const catchedWishlist = await redis.get(`userWishlist-${userId}`);
+  const catchedWishlist = await redis.del(`userWishlist-${userId}`);
 
-  if(catchedWishlist){
-    return res.status(200).json({
-      success: true,
-      message: "User wishlist fetched.",
-      data: JSON.parse(catchedWishlist)
-    });
-  }
+  // if(catchedWishlist){
+  //   return res.status(200).json({
+  //     success: true,
+  //     message: "User wishlist fetched.",
+  //     data: JSON.parse(catchedWishlist)
+  //   });
+  // }
 
-  const wishlist = await Wishlist.findOne({ userId }).populate({
+  let wishlist = await Wishlist.findOne({ userId }).populate({
     path: "products",
-    select: "title thumbnail price discount stock",
+    select: "_id title thumbnail price discount stock",
   });
 
-  await redis.set(`userWishlist-${userId}`, JSON.stringify(wishlist));
+  const products = await Promise.all(
+    (wishlist?.products || []).map(async (item) => {
+      const newItem = JSON.parse(JSON.stringify(item));
+
+      const product = await redis.get(`product-details-${newItem._id}`);
+
+      if (product) {
+        const data = JSON.parse(product);
+        return {
+          ...data.product,
+          ratingAndReviews: {
+            totalRating: data?.avgRating,
+            totalReviews: data?.totalRating,
+            avgRating: data?.ratingAndReviews,
+          },
+        };
+      }
+
+      let ratingAndReviews;
+
+      const catchedRating = await redis.get(`product-rating-${newItem._id}`);
+
+      if (!catchedRating) {
+        const ratingAndReviewsData = await RatingAndReviews.find({
+          product: newItem._id,
+        });
+
+        ratingAndReviews = await calculateRatingAndReviews(
+          ratingAndReviewsData
+        );
+      } else {
+        ratingAndReviews = JSON.parse(catchedRating);
+      }
+
+      return {
+        ...newItem,
+        thumbnail: newItem.thumbnail.url,
+        ratingAndReviews,
+      };
+    })
+  );
+
+  await redis.set(`userWishlist-${userId}`, JSON.stringify(products));
 
   return res.status(200).json({
     success: true,
     message: "User wishlist fetched.",
-    data: wishlist?.products || [],
+    data: products || [],
   });
 }); // redis done
 
@@ -207,14 +266,13 @@ export const createUserWishlistItems = TryCatch(async (req, res, next) => {
 
   wishlistItems = await Wishlist.findOne({ userId });
 
-  if(wishlistItems){
+  if (wishlistItems) {
     wishlistItems.products.push(productId);
     await wishlistItems.save();
-
-  }else{
-    wishlistItems = await Wishlist.create({userId, products: [productId]});
+  } else {
+    wishlistItems = await Wishlist.create({ userId, products: [productId] });
   }
-  
+
   await redis.del(`userWishlist-${userId}`);
 
   return res.status(200).json({
@@ -248,7 +306,10 @@ export const deleteUserWishlistItems = TryCatch(async (req, res, next) => {
 
   await redis.del(`userWishlist-${userId}`);
 
-  await Wishlist.findOneAndUpdate({ userId }, {$pull: {products: productId}});
+  await Wishlist.findOneAndUpdate(
+    { userId },
+    { $pull: { products: productId } }
+  );
 
   return res.status(200).json({
     success: true,
@@ -257,18 +318,18 @@ export const deleteUserWishlistItems = TryCatch(async (req, res, next) => {
 }); // redis done
 
 export const addUserWishlist = TryCatch(async (req, res, next) => {
-  const {userId, product} = req.body as CWishlistType;
+  const { userId, product } = req.body as CWishlistType;
 
-  if(!product || !userId){
+  if (!product || !userId) {
     return next(new ErrorHandler("Something is missing in the review.", 400));
   }
 
-  await Wishlist.findOneAndUpdate({userId}, {$push: {products: product}});
+  await Wishlist.findOneAndUpdate({ userId }, { $push: { products: product } });
   await redis.del(`userWishlist-${userId}`);
-  
+
   return res.status(200).json({
     success: true,
-    message: "Your wishlist added successfully."
+    message: "Your wishlist added successfully.",
   });
 }); // redis done
 
@@ -380,132 +441,134 @@ export const fetchUserNotifications = TryCatch(async (req, res, next) => {
 });
 
 export const fetchUserReferralDashboard = TryCatch(async (req, res, next) => {
-    const { userId } = req.query;
+  const { userId } = req.query;
 
-    if (!userId) {
-      return next(new ErrorHandler("Something is missing here.", 400));
-    }
+  if (!userId) {
+    return next(new ErrorHandler("Something is missing here.", 400));
+  }
 
-    const referMemeberData = await ReferMember.findOne({ userId }).select(
-      "-userId -referredUserReferCode"
-    );
-    const referralLevels = await ReferralLevel.find({ userId }).select(
-      "-userId"
-    );
+  const referMemeberData = await ReferMember.findOne({ userId }).select(
+    "-userId -referredUserReferCode"
+  );
+  const referralLevels = await ReferralLevel.find({ userId }).select("-userId");
 
-    const eachLevelReferralEarning = referralLevels.map(async (rl) => {
-      const users = rl.users.map(async (userId) => {
-        const user = await ReferMember.findOne({ userId }).select(
-          "withdrawalPermission"
-        );
+  const eachLevelReferralEarning = referralLevels.map(async (rl) => {
+    const users = rl.users.map(async (userId) => {
+      const user = await ReferMember.findOne({ userId }).select(
+        "withdrawalPermission"
+      );
 
-        let isWithdrawable = false;
+      let isWithdrawable = false;
 
-        if (user.withdrawalPermission) isWithdrawable = true;
-        return isWithdrawable;
-      });
-
-      const withdrawable = users.filter((u) => u).length;
-      const unWithdrawable = users.filter((u) => !u).length;
-
-      return {
-        level: rl.level,
-        withdrawable,
-        unWithdrawable,
-        earning: getEarningLevelWise(rl.level, withdrawable),
-      };
+      if (user.withdrawalPermission) isWithdrawable = true;
+      return isWithdrawable;
     });
 
-    const withdrawalHistory = await Transaction.find({
-      $and: [{ userId }, { type: "withdrawal" }, { mode: "referral" }],
-    }).select("createdAt amount status");
+    const withdrawable = users.filter((u) => u).length;
+    const unWithdrawable = users.filter((u) => !u).length;
 
-    return res.status(200).json({
-      success: true,
-      message: "User referral dashboard fetched.",
-      data: {
-        referMemeberData,
-        eachLevelReferralEarning,
-        withdrawalHistory,
-      },
-    });
+    return {
+      level: rl.level,
+      withdrawable,
+      unWithdrawable,
+      earning: getEarningLevelWise(rl.level, withdrawable),
+    };
+  });
+
+  const withdrawalHistory = await Transaction.find({
+    $and: [{ userId }, { type: "withdrawal" }, { mode: "referral" }],
+  }).select("createdAt amount status");
+
+  return res.status(200).json({
+    success: true,
+    message: "User referral dashboard fetched.",
+    data: {
+      referMemeberData,
+      eachLevelReferralEarning,
+      withdrawalHistory,
+    },
+  });
 });
 
 export const addGiftCard = TryCatch(async (req, res, next) => {
   const giftCard = req.body as CGiftCardType;
 
-  if(!giftCard){
+  if (!giftCard) {
     return next(new ErrorHandler("Something is missing in the GiftCard.", 400));
   }
 
-
   return res.status(200).json({
     success: true,
-    message: "Gift Card created successfully."
+    message: "Gift Card created successfully.",
   });
 });
 
 export const addUserCard = TryCatch(async (req, res, next) => {
   const userCard = req.body as CUserCardType;
 
-  if(!userCard){
-    return next(new ErrorHandler("Something is missing in the card information.", 400));
+  if (!userCard) {
+    return next(
+      new ErrorHandler("Something is missing in the card information.", 400)
+    );
   }
 
   await Card.create(userCard);
-  
+
   return res.status(200).json({
     success: true,
-    message: "User Card added successfully."
+    message: "User Card added successfully.",
   });
 });
 
 export const addUserReview = TryCatch(async (req, res, next) => {
   const review = req.body as CRatingAndReviewsType;
 
-  if(!review){
+  if (!review) {
     return next(new ErrorHandler("Something is missing in the review.", 400));
   }
 
   await RatingAndReviews.create(review);
-  
+
   return res.status(200).json({
     success: true,
-    message: "Your review added successfully."
+    message: "Your review added successfully.",
   });
 });
 
 export const updateUserPassword = TryCatch(async (req, res, next) => {
-  const {userId, password, newPassword} = req.body as UpdateUserPasswordType;
+  const { userId, password, newPassword } = req.body as UpdateUserPasswordType;
 
-  if(!userId || !password || !newPassword){
+  if (!userId || !password || !newPassword) {
     return next(new ErrorHandler("Something is missing", 400));
   }
 
   const user = await User.findById(userId);
   const isPasswordMatched = await bcrypt.compare(password, user.password);
 
-  if(!isPasswordMatched){
+  if (!isPasswordMatched) {
     return next(new ErrorHandler("Old Password is incorrect", 401));
   }
 
-  if(password === newPassword){
+  if (password === newPassword) {
     return next(new ErrorHandler("New password must be different", 401));
   }
 
-  user.password = await bcrypt.hash(newPassword, parseInt(process.env.BCRYPT_SALT_ROUND!));
+  user.password = await bcrypt.hash(
+    newPassword,
+    parseInt(process.env.BCRYPT_SALT_ROUND!)
+  );
   await user.save();
 
   const ntfData = {
     message: "Your password has been changed successfully",
     type: "other",
-    userId
-  }
+    userId,
+  };
   await Notification.create(ntfData);
   await redis.del(`userNotifications-${userId}`);
-  
+
   return res.status(200).json({
     success: true,
-    message: "Password changed"
+    message: "Password changed",
   });
 });

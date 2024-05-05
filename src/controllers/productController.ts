@@ -5,7 +5,7 @@ import { TryCatch } from "../middlewares/error.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { CProductType } from "../types/user.js";
 import { redis } from "../utils/Redis.js";
-import { calculateRatingAndReviews } from "../utils/services.js";
+import { calculateRatingAndReviews, formatProductsDataForProductCard } from "../utils/services.js";
 import { FilterProductType } from "../types/searchType.js";
 import CategoriesWithImage from "../models/CategoriesWithImage.js";
 import { CategoryWithImageType } from "../types/product.js";
@@ -21,34 +21,15 @@ export const getTopProducts = TryCatch(async (req, res) => {
     });
   }
 
+
   const topProducts = await Product.find()
     .sort({ sold: -1 })
     .select("_id title price stock discount thumbnail")
     .limit(5);
 
-  const updatedTopProducts = await Promise.all(
-    topProducts.map(async (item) => {
-      const ratingAndReviews = await RatingAndReviews.find({
-        product: item._id,
-      });
+  const updatedTopProducts = await formatProductsDataForProductCard(topProducts);
 
-      const { totalReviews, avgRating, totalRating } =
-        await calculateRatingAndReviews(ratingAndReviews);
-
-      const newItem = await JSON.parse(JSON.stringify(item));
-
-      return {
-        ...newItem,
-        ratingAndReviews: {
-          totalReviews,
-          avgRating: avgRating > 0 ? avgRating : 0,
-          totalRating
-        },
-      };
-    })
-  );
-
-  // await redis.set("topProducts", JSON.stringify(updatedTopProducts));
+  await redis.set("topProducts", JSON.stringify(updatedTopProducts));
 
   return res.status(200).json({
     success: true,
@@ -68,7 +49,9 @@ export const getLatestProducts = TryCatch(async (req, res) => {
     });
   }
 
-  const latestProducts = await Product.find().sort({ createdAt: 1 }).limit(5);
+  let latestProducts = await Product.find().select("_id title price stock discount thumbnail").sort({ createdAt: 1 }).limit(5);
+  latestProducts = await formatProductsDataForProductCard(latestProducts);
+
   await redis.set("latestProducts", JSON.stringify(latestProducts));
 
   return res.status(200).json({
@@ -89,7 +72,10 @@ export const getComboProducts = TryCatch(async (req, res) => {
     });
   }
 
-  const comboProducts = await Product.find().limit(5);
+  let comboProducts = await Product.find().limit(5);
+
+  comboProducts = await formatProductsDataForProductCard(comboProducts);
+
   await redis.set("comboProducts", JSON.stringify(comboProducts));
 
   return res.status(200).json({
@@ -106,9 +92,13 @@ export const getProductById = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("Product Id is not found.", 400));
   }
 
-  const product = await Product.findById(productId).select("-ownerId");
+  let product = await Product.findById(productId).select("-ownerId");
+  product = await JSON.parse(JSON.stringify(product));
+  product = { ...product, thumbnail:product?.thumbnail?.url, images: product?.images?.map((img:any) => img.url) }
 
   let rate;
+
+
 
   const catchedRating = await redis.get(`product-rating-${productId}`);
 
@@ -122,15 +112,19 @@ export const getProductById = TryCatch(async (req, res, next) => {
 
   const {avgRating, totalRating, totalReviews} = rate;
 
+  const newProduct = {
+    product,
+    avgRating: avgRating > 0 ? avgRating : 0,
+    totalRating,
+    totalReviews,
+  }
+
+  await redis.set(`product-details-${product._id}`, JSON.stringify(newProduct));
+
   return res.status(200).json({
     success: true,
     message: "Product has been founded.",
-    data: {
-      product,
-      avgRating: avgRating > 0 ? avgRating : 0,
-      totalRating,
-      totalReviews,
-    },
+    data: newProduct,
   });
 }); // redis done
 
@@ -262,6 +256,13 @@ export const searchProduct = TryCatch(async (req, res) => {
   //   return false;
   // });
 
+  filteredProducts = filteredProducts.map((item) => {
+    return {
+      ...item,
+      thumbnail:item.thumbnail.url
+    }
+  });
+
 
   return res.status(200).json({
     success: true,
@@ -322,11 +323,8 @@ export const getCategoriesWithImage = TryCatch(async (req, res, next) => {
   }
 
   let categories = await CategoriesWithImage.find();
-  categories = (categories[0]?.categories || []).map((item:CategoryWithImageType) => {
-    return {
-      name: item.parent.at(0)?.toUpperCase() + item.parent.slice(1),
-      image: item.parentImage
-    }
+  categories = categories.map((item:CategoryWithImageType) => {
+    return item.parent
   }).slice(0, 6);
 
   await redis.set("productCategoriesWithImage", JSON.stringify(categories));

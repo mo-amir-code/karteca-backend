@@ -1,5 +1,10 @@
 import mongoose, { Schema, Document } from "mongoose";
 
+type ImageType = {
+  url:string,
+  publicId:string
+}
+
 interface ProductType extends Document {
   sellerId: Schema.Types.ObjectId;
   title: string;
@@ -9,8 +14,8 @@ interface ProductType extends Document {
   colors: string[];
   discount: number;
   sold: number;
-  thumbnail: string;
-  images: string[];
+  thumbnail: ImageType;
+  images: ImageType[];
   category: {
     parent: string;
     child: string
@@ -28,7 +33,7 @@ interface ProductType extends Document {
 
 const productSchema: Schema<ProductType> = new Schema(
   {
-    sellerId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    sellerId: { type: Schema.Types.ObjectId, ref: "User" },
     title: { type: String, required: true },
     description: { type: Schema.Types.Mixed, required: true },
     price: { type: Number, required: true },
@@ -36,8 +41,14 @@ const productSchema: Schema<ProductType> = new Schema(
     colors: [{ type: String }],
     discount: { type: Number, required: true, min: 0, max: 100 },
     sold: { type: Number, default: 0 },
-    thumbnail: { type: String, required: true },
-    images: [{ type: String }],
+    thumbnail: { 
+      url: { type: String, required: true },
+      publicId: { type: String, required: true }
+     },
+    images: [{ 
+      url: { type: String, required: true },
+      publicId: { type: String, required: true }
+     }],
     category: {
       parent: {type: String, required: true},
       child: {type: String, required: true}

@@ -3,6 +3,8 @@ import { AuthSignupUserType } from "../types/user.js";
 import crypto from "crypto";
 import Cart from "../models/Cart.js";
 import { redis } from "./Redis.js";
+import RatingAndReviews from "../models/RatingAndReviews.js";
+import { ProductCardReturnType, ProductCardType } from "../types/product.js";
 
 export const checkSignupItemsAndMakeStructured = async (
   body: AuthSignupUserType | null
@@ -157,4 +159,44 @@ export const returnWalletAmount = ({name, amount, totalAmount}:{name?:string | u
     }
     return 0
   }else return amount || 0
+}
+
+export const formatProductsDataForProductCard = async (products:ProductCardType[]): Promise<ProductCardReturnType[]>  => {
+  return await Promise.all(
+    products.map(async (item) => {
+
+      const cachedProduct = await redis.get(`product-details-${item._id}`);
+
+      if (cachedProduct) {
+        const data = JSON.parse(cachedProduct);
+        return {
+          ...data.product,
+          ratingAndReviews: {
+            totalRating: data?.avgRating,
+            totalReviews: data?.totalRating,
+            avgRating: data?.ratingAndReviews,
+          },
+        };
+      }
+
+      const ratingAndReviews = await RatingAndReviews.find({
+        product: item._id,
+      });
+
+      const { totalReviews, avgRating, totalRating } =
+        await calculateRatingAndReviews(ratingAndReviews);
+
+      const newItem = await JSON.parse(JSON.stringify(item));
+
+      return {
+        ...newItem,
+        thumbnail: (item.thumbnail as { url: string }).url,
+        ratingAndReviews: {
+          totalReviews,
+          avgRating: avgRating > 0 ? avgRating : 0,
+          totalRating
+        },
+      };
+    })
+  );
 }

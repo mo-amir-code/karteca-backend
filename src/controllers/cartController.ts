@@ -22,10 +22,23 @@ export const getCartItemsByUserId = TryCatch(async (req, res, next) => {
     });
   }
 
-  const carts = await Cart.find({ userId }).populate({
+  let carts = await Cart.find({ userId }).populate({
     path: "product",
     select: "title thumbnail specifications price"
-  }).select("quantity totalAmount currentPrice discount color");
+  }).select("quantity product totalAmount currentPrice discount color");
+
+  
+  carts = carts.map((cart) => {
+    const newCart = JSON.parse(JSON.stringify(cart));
+    
+    return {
+      ...newCart,
+      product:{
+        ...newCart.product,
+        thumbnail: newCart.product.thumbnail.url
+      }
+    }
+  });
 
   await redis.set(`userCartItem-${userId}`, JSON.stringify(carts));
 
