@@ -5,7 +5,10 @@ import { TryCatch } from "../middlewares/error.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { CProductType } from "../types/user.js";
 import { redis } from "../utils/Redis.js";
-import { calculateRatingAndReviews, formatProductsDataForProductCard } from "../utils/services.js";
+import {
+  calculateRatingAndReviews,
+  formatProductsDataForProductCard,
+} from "../utils/services.js";
 import { FilterProductType } from "../types/searchType.js";
 import CategoriesWithImage from "../models/CategoriesWithImage.js";
 import { CategoryWithImageType } from "../types/product.js";
@@ -13,21 +16,22 @@ import { CategoryWithImageType } from "../types/product.js";
 export const getTopProducts = TryCatch(async (req, res) => {
   const cathedData = await redis.get("topProducts");
 
-  if(cathedData){
+  if (cathedData) {
     return res.status(200).json({
       success: true,
       message: "Top Products fetched. catched",
-      data: JSON.parse(cathedData)
+      data: JSON.parse(cathedData),
     });
   }
-
 
   const topProducts = await Product.find()
     .sort({ sold: -1 })
     .select("_id title price stock discount thumbnail")
     .limit(5);
 
-  const updatedTopProducts = await formatProductsDataForProductCard(topProducts);
+  const updatedTopProducts = await formatProductsDataForProductCard(
+    topProducts
+  );
 
   await redis.set("topProducts", JSON.stringify(updatedTopProducts));
 
@@ -41,15 +45,18 @@ export const getTopProducts = TryCatch(async (req, res) => {
 export const getLatestProducts = TryCatch(async (req, res) => {
   const cathedData = await redis.get("latestProducts");
 
-  if(cathedData){
+  if (cathedData) {
     return res.status(200).json({
       success: true,
       message: "Latest Product Fetched",
-      data: JSON.parse(cathedData)
+      data: JSON.parse(cathedData),
     });
   }
 
-  let latestProducts = await Product.find().select("_id title price stock discount thumbnail").sort({ createdAt: 1 }).limit(5);
+  let latestProducts = await Product.find()
+    .select("_id title price stock discount thumbnail")
+    .sort({ createdAt: 1 })
+    .limit(5);
   latestProducts = await formatProductsDataForProductCard(latestProducts);
 
   await redis.set("latestProducts", JSON.stringify(latestProducts));
@@ -64,11 +71,11 @@ export const getLatestProducts = TryCatch(async (req, res) => {
 export const getComboProducts = TryCatch(async (req, res) => {
   const cathedData = await redis.get("comboProducts");
 
-  if(cathedData){
+  if (cathedData) {
     return res.status(200).json({
       success: true,
       message: "Combo Products fetched",
-      data: JSON.parse(cathedData)
+      data: JSON.parse(cathedData),
     });
   }
 
@@ -81,7 +88,7 @@ export const getComboProducts = TryCatch(async (req, res) => {
   return res.status(200).json({
     success: true,
     message: "Combo's Products fetched.",
-    data: comboProducts
+    data: comboProducts,
   });
 }); // redis done
 
@@ -94,30 +101,34 @@ export const getProductById = TryCatch(async (req, res, next) => {
 
   let product = await Product.findById(productId).select("-ownerId");
   product = await JSON.parse(JSON.stringify(product));
-  product = { ...product, thumbnail:product?.thumbnail?.url, images: product?.images?.map((img:any) => img.url) }
+  product = {
+    ...product,
+    thumbnail: product?.thumbnail?.url,
+    images: product?.images?.map((img: any) => img.url),
+  };
 
   let rate;
 
-
-
   const catchedRating = await redis.get(`product-rating-${productId}`);
 
-  if(!catchedRating){
-    const ratingAndReviews = await RatingAndReviews.find({ product: product._id });
+  if (!catchedRating) {
+    const ratingAndReviews = await RatingAndReviews.find({
+      product: product._id,
+    });
     rate = await calculateRatingAndReviews(ratingAndReviews);
     await redis.set(`product-rating-${productId}`, JSON.stringify(rate));
-  }else{
+  } else {
     rate = JSON.parse(catchedRating);
   }
 
-  const {avgRating, totalRating, totalReviews} = rate;
+  const { avgRating, totalRating, totalReviews } = rate;
 
   const newProduct = {
     product,
     avgRating: avgRating > 0 ? avgRating : 0,
     totalRating,
     totalReviews,
-  }
+  };
 
   await redis.set(`product-details-${product._id}`, JSON.stringify(newProduct));
 
@@ -155,7 +166,17 @@ export const createProduct = TryCatch(async (req, res) => {
 });
 
 export const searchProduct = TryCatch(async (req, res) => {
-  const {sort, category, discount, minvalue, maxvalue, rating, query, page, limit} = req.query as unknown as FilterProductType;
+  const {
+    sort,
+    category,
+    discount,
+    minvalue,
+    maxvalue,
+    rating,
+    query,
+    page,
+    limit,
+  } = req.query as unknown as FilterProductType;
 
   let intPage = parseInt(page);
   let intLimit = parseInt(limit);
@@ -166,20 +187,21 @@ export const searchProduct = TryCatch(async (req, res) => {
   const childCategories = category?.split(",") || [];
   let queryDiscount = (discount?.split(",") || []).map(Number);
   const lowestDiscount = Math.min(...queryDiscount);
-  
+
   let queryFilters: any = {};
 
   if (discount) queryFilters.discount = { $gte: lowestDiscount };
   if (minvalue) queryFilters.price = { $gte: intMinValue };
-  if (maxvalue) queryFilters.price = { ...queryFilters.price, $lte: intMaxValue };
+  if (maxvalue)
+    queryFilters.price = { ...queryFilters.price, $lte: intMaxValue };
 
   if (childCategories.length > 0 && childCategories[0] !== "") {
-    queryFilters['category.child'] = { $in: childCategories }; 
+    queryFilters["category.child"] = { $in: childCategories };
   }
 
-  let sortQuery:any = {};
-  if(sort){
-    switch(sort){
+  let sortQuery: any = {};
+  if (sort) {
+    switch (sort) {
       case "top":
         sortQuery.sold = -1;
         break;
@@ -198,57 +220,69 @@ export const searchProduct = TryCatch(async (req, res) => {
   }
 
   if (query) {
-    const regex = new RegExp(query.trim().split(/\s+/).join('|'), 'i');
+    const regex = new RegExp(query.trim().split(/\s+/).join("|"), "i");
     queryFilters.$or = [
       { title: regex },
       { description: regex },
-      { 'category.child': regex }
+      { "category.child": regex },
     ];
   }
 
   let totalItems = await Product.countDocuments(queryFilters).sort(sortQuery);
 
   let filteredProducts = await Product.find(queryFilters)
+    .select("_id title price stock discount thumbnail")
     .sort(sortQuery)
     .skip((intPage - 1) * intLimit)
     .limit(intLimit);
 
   filteredProducts = await Promise.all(
     filteredProducts.map(async (item) => {
-
       const newItem = await JSON.parse(JSON.stringify(item));
 
-      const catchedRatingAndReviews = await redis.get(`product-ratingAndReviews-${item._id}`);
+      const catchedRatingAndReviews = await redis.get(
+        `product-ratingAndReviews-${item._id}`
+      );
 
-      if(catchedRatingAndReviews){
+      if (catchedRatingAndReviews) {
         return {
           ...newItem,
-          ratingAndReviews: JSON.parse(catchedRatingAndReviews)
-        }
+          thumbnail: newItem.thumbnail.url,
+          ratingAndReviews: JSON.parse(catchedRatingAndReviews),
+        };
       }
 
       const ratingAndReviews = await RatingAndReviews.find({
         product: item._id,
       });
 
-      const { totalReviews, avgRating } = await calculateRatingAndReviews(ratingAndReviews);
+      const { totalReviews, avgRating } = await calculateRatingAndReviews(
+        ratingAndReviews
+      );
 
-      await redis.set(`product-ratingAndReviews-${item._id}`, JSON.stringify({
-        totalReviews,
-        avgRating: avgRating > 0? avgRating : 0
-      }))
+      await redis.set(
+        `product-ratingAndReviews-${item._id}`,
+        JSON.stringify({
+          totalReviews,
+          avgRating: avgRating > 0 ? avgRating : 0,
+        })
+      );
 
       return {
         ...newItem,
+        thumbnail: newItem.thumbnail.url,
         ratingAndReviews: {
           totalReviews,
-          avgRating: avgRating > 0? avgRating : 0
-        }
-      }
+          avgRating: avgRating > 0 ? avgRating : 0,
+        },
+      };
     })
   );
 
-  if(rating) filteredProducts = filteredProducts.filter((item) => item.ratingAndReviews.avgRating >= intRating);
+  if (rating)
+    filteredProducts = filteredProducts.filter(
+      (item) => item.ratingAndReviews.avgRating >= intRating
+    );
 
   // if(query) filteredProducts = filteredProducts.filter((item) => {
   //   const {title, description, category:{parent, child}, highlights, specifications} = item;
@@ -256,34 +290,26 @@ export const searchProduct = TryCatch(async (req, res) => {
   //   return false;
   // });
 
-  filteredProducts = filteredProducts.map((item) => {
-    return {
-      ...item,
-      thumbnail:item.thumbnail.url
-    }
-  });
-
-
   return res.status(200).json({
     success: true,
     message: "Products filtered",
-    data:{
+    data: {
       products: filteredProducts,
-      totalPage: filteredProducts.length < 12? 1 : Math.ceil(totalItems / intLimit),
-      totalResults: totalItems
-    }
+      totalPage:
+        filteredProducts.length < 12 ? 1 : Math.ceil(totalItems / intLimit),
+      totalResults: totalItems,
+    },
   });
 });
 
 export const getCategories = TryCatch(async (req, res, next) => {
-
   const catchedCategories = await redis.get("productCategories");
 
-  if(catchedCategories){
+  if (catchedCategories) {
     return res.status(200).json({
       success: true,
       message: "Categories fetched",
-      data: JSON.parse(catchedCategories)
+      data: JSON.parse(catchedCategories),
     });
   }
 
@@ -294,11 +320,11 @@ export const getCategories = TryCatch(async (req, res, next) => {
     return newItem.category.child;
   });
 
-  let filteredCategories = [...new Set(categories)].map((cat:string) => {
+  let filteredCategories = [...new Set(categories)].map((cat: string) => {
     return {
       name: cat.at(0)?.toUpperCase() + cat.slice(1),
-      value: cat
-    }
+      value: cat,
+    };
   });
 
   await redis.set("productCategories", JSON.stringify(filteredCategories));
@@ -306,32 +332,33 @@ export const getCategories = TryCatch(async (req, res, next) => {
   return res.status(200).json({
     success: true,
     message: "Categories fetched",
-    data: filteredCategories
+    data: filteredCategories,
   });
 }); // redis done
 
 export const getCategoriesWithImage = TryCatch(async (req, res, next) => {
-
   const catchedCategories = await redis.get("productCategoriesWithImage");
 
-  if(catchedCategories){
+  if (catchedCategories) {
     return res.status(200).json({
       success: true,
       message: "Categories fetched",
-      data: JSON.parse(catchedCategories)
+      data: JSON.parse(catchedCategories),
     });
   }
 
   let categories = await CategoriesWithImage.find();
-  categories = categories.map((item:CategoryWithImageType) => {
-    return item.parent
-  }).slice(0, 6);
+  categories = categories
+    .map((item: CategoryWithImageType) => {
+      return item.parent;
+    })
+    .slice(0, 6);
 
   await redis.set("productCategoriesWithImage", JSON.stringify(categories));
 
   return res.status(200).json({
     success: true,
     message: "Categories fetched",
-    data: categories
+    data: categories,
   });
 }); // redis done

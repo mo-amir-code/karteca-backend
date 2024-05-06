@@ -189,15 +189,15 @@ export const fetchUserWishlist = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("Something is missing here.", 400));
   }
 
-  const catchedWishlist = await redis.del(`userWishlist-${userId}`);
+  const catchedWishlist = await redis.get(`userWishlist-${userId}`);
 
-  // if(catchedWishlist){
-  //   return res.status(200).json({
-  //     success: true,
-  //     message: "User wishlist fetched.",
-  //     data: JSON.parse(catchedWishlist)
-  //   });
-  // }
+  if(catchedWishlist){
+    return res.status(200).json({
+      success: true,
+      message: "User wishlist fetched.",
+      data: JSON.parse(catchedWishlist)
+    });
+  }
 
   let wishlist = await Wishlist.findOne({ userId }).populate({
     path: "products",
@@ -212,12 +212,19 @@ export const fetchUserWishlist = TryCatch(async (req, res, next) => {
 
       if (product) {
         const data = JSON.parse(product);
+        const { _id, title, price, stock, discount, thumbnail } = data.product;
+        const { avgRating, totalRating, totalReviews } = data;
         return {
-          ...data.product,
+          _id,
+          title,
+          price,
+          stock,
+          discount,
+          thumbnail,
           ratingAndReviews: {
-            totalRating: data?.avgRating,
-            totalReviews: data?.totalRating,
-            avgRating: data?.ratingAndReviews,
+            totalRating: totalRating,
+            totalReviews: totalReviews,
+            avgRating: avgRating,
           },
         };
       }
