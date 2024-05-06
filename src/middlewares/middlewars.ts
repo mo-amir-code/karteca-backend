@@ -65,7 +65,7 @@ export const isAdminValidRequest = TryCatch(async (req, res, next) => {
     const data = jwt.verify(sessiontoken, process.env.JWT_SECRET_KEY!);
     const { userId, exp } = data as { userId: string; exp: number };
 
-    user = await User.findById(userId).select("sessionToken");
+    user = await User.findById(userId).select("sessionToken role");
 
     if (user.sessionToken !== sessiontoken) {
       user.sessionToken = undefined;
