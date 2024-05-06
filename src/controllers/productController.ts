@@ -100,6 +100,11 @@ export const getProductById = TryCatch(async (req, res, next) => {
   }
 
   let product = await Product.findById(productId).select("-ownerId");
+
+  if(!product){
+    return next(new ErrorHandler("Product not found", 400));
+  }
+
   product = await JSON.parse(JSON.stringify(product));
   product = {
     ...product,
