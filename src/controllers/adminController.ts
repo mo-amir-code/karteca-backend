@@ -208,8 +208,9 @@ export const createAdmin = TryCatch(async (req, res, next) => {
     }
 
     const user = await User.findOne({email});
+    const isAdminExist = await Admin.findOne({ userId:user._id });
 
-    if(user.role === "admin"){
+    if(user.role === "admin" && isAdminExist){
         return res.status(304).json({
             success: false,
             message: "User already a admin"
