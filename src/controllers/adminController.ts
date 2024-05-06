@@ -1,4 +1,5 @@
 import { TryCatch } from "../middlewares/error.js";
+import Admin from "../models/Admin.js";
 import CategoriesWithImage from "../models/CategoriesWithImage.js";
 import Product from "../models/Product.js";
 import TxnVerifyRequest from "../models/TxnVerifyRequest.js";
@@ -198,3 +199,84 @@ export const createCategory = TryCatch(async (req, res, next) => {
 
     
 });
+
+export const createAdmin = TryCatch(async (req, res, next) => {
+    const {email, upi} = req.body;
+
+    if(!email || !upi){
+        return next(new ErrorHandler("Required field is missing", 400));
+    }
+
+    const user = await User.findOne({email});
+
+    if(user.role === "admin"){
+        return res.status(304).json({
+            success: false,
+            message: "User already a admin"
+        });
+    }
+
+    user.role = "admin";
+    await Admin.create({
+        userId:user._id,
+        upi:{
+            upiId: upi,
+            isActive: false
+        }
+    });
+    await user.save();
+
+    return res.status(200).json({
+        success: true,
+        message: "Admin created"
+    });
+});
+
+export const activeUpi = TryCatch(async (req, res, next) => {
+    const {userId} = req.body;
+
+    if(!userId){
+        return next(new ErrorHandler("Required field is missing", 400));
+    }
+
+    const admin = await Admin.findOne({userId});
+
+    if(!admin){
+        return next(new ErrorHandler("Admin not found", 401));
+    }
+
+    await Admin.updateMany({
+        "upi.isActive":false
+    });
+
+    admin.upi.isActive = true;
+    await admin.save();
+
+    return res.status(200).json({
+        success: true,
+        message: `UPI ${admin.upi.upiId} activated to collect payment`
+    });
+
+});
+
+export const getAdminUpis = TryCatch(async (req, res, next) => {
+    let upis = await Admin.find().populate({
+        path: "userId",
+        select: "name _id"
+    });
+
+    upis = upis.map((upi) => {
+        return {
+            adminId: upi.userId._id,
+            name:upi.userId.name,
+            upi:upi.upi.upiId,
+            isActive: upi.upi.isActive
+        }
+    });
+
+    return res.status(200).json({
+        success: true,
+        message: "fetched",
+        data:upis
+    });
+})

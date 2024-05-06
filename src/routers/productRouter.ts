@@ -1,5 +1,6 @@
 import express, { Router } from "express";
 import { createProduct, getBanners, getCategories, getCategoriesWithImage, getComboProducts, getLatestProducts, getProductById, getTopProducts, searchProduct } from "../controllers/productController.js";
+import { isAdminValidRequest } from "../middlewares/middlewars.js";
 
 const router: Router = express.Router();
 
@@ -12,6 +13,6 @@ router
    .get("/image/categories", getCategoriesWithImage)
    .get("/:productId", getProductById)
    .get("/banner", getBanners)
-   .post("/", createProduct)
+   .post("/", isAdminValidRequest, createProduct)
 
 export default router;

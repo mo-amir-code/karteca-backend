@@ -3,6 +3,7 @@ import { MailOptions, sendMail } from "../utils/sendOTP.js";
 import {
   checkSignupItemsAndMakeStructured,
   generateOTP,
+  isJwtTokenExpired,
 } from "../utils/services.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -242,10 +243,14 @@ export const signin = TryCatch(async (req, res, next) => {
       return next(new ErrorHandler("Internal Error Occurred!", 400));
     }
 
-    const sessionToken: string = jwt.sign({ userId: user._id }, jwtSecretKey, { expiresIn:JWT_AGE_15_MIN });
-    user.sessionToken = sessionToken;
-    await user.save();
+    let sessionToken = user.sessionToken;
 
+    if(isJwtTokenExpired(sessionToken)){
+      sessionToken = jwt.sign({ userId: user._id }, jwtSecretKey, { expiresIn:JWT_AGE_15_MIN });
+      user.sessionToken = sessionToken;
+    }
+    
+    await user.save();
 
     res.cookie("sessiontoken", sessionToken, {
       maxAge: COOKIE_AGE_4_DAY, // 4 days

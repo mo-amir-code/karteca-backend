@@ -5,6 +5,8 @@ import Cart from "../models/Cart.js";
 import { redis } from "./Redis.js";
 import RatingAndReviews from "../models/RatingAndReviews.js";
 import { ProductCardReturnType, ProductCardType } from "../types/product.js";
+import jwt from "jsonwebtoken"
+import { JWT_CURRENT_DATE } from "./constants.js";
 
 export const checkSignupItemsAndMakeStructured = async (
   body: AuthSignupUserType | null
@@ -199,4 +201,18 @@ export const formatProductsDataForProductCard = async (products:ProductCardType[
       };
     })
   );
+}
+
+export const isJwtTokenExpired = (token:string | undefined): boolean => {
+  if(!token){
+    return true
+  }
+
+  const {exp} = jwt.verify(token, process.env.JWT_SECRET_KEY!) as {exp:number};
+
+  if(JWT_CURRENT_DATE > exp){
+    return true;
+  }
+
+  return false;
 }
