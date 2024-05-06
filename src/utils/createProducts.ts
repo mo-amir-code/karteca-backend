@@ -148,39 +148,48 @@ export const createCategoriesWithImage = async () => {
     const images = [
         {
             name:"smartwatch",
-            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712744946/categories/rsp9wilxqwnfajkg4yco.png"
+            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712744946/categories/rsp9wilxqwnfajkg4yco.png",
+            publicId: "1234"
         },
         {
             name:"smartphone",
-            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746703/categories/dj7ekkki5yat78ok1nhx.png"
+            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746703/categories/dj7ekkki5yat78ok1nhx.png",
+            publicId: "1234"
         },
         {
             name:"phone",
-            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746703/categories/dj7ekkki5yat78ok1nhx.png"
+            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746703/categories/dj7ekkki5yat78ok1nhx.png",
+            publicId: "1234"
         },
         {
             name:"refrigerator",
-            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746705/categories/nb9h3uajuxjzvhgp1yop.png"
+            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746705/categories/nb9h3uajuxjzvhgp1yop.png",
+            publicId: "1234"
         },
         {
             name:"laptop",
-            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746704/categories/avzfverw8y9rj0reztxq.png"
+            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746704/categories/avzfverw8y9rj0reztxq.png",
+            publicId: "1234"
         },
         {
             name:"tablet",
-            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746703/categories/tcsybxadzqk1opqrf4ju.png"
+            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746703/categories/tcsybxadzqk1opqrf4ju.png",
+            publicId: "1234"
         },
         {
             name:"gamesconsole",
-            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746705/categories/xw4ejenjmwucxfp7vbpt.png"
+            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746705/categories/xw4ejenjmwucxfp7vbpt.png",
+            publicId: "1234"
         },
         {
             name:"camera",
-            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746704/categories/wjciswzj0vivr5b2fosn.png"
+            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746704/categories/wjciswzj0vivr5b2fosn.png",
+            publicId: "1234"
         },
         {
             name:"drone",
-            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746704/categories/olgsju9cespaagm07dzn.png"
+            image: "https://res.cloudinary.com/doidnfajd/image/upload/v1712746704/categories/olgsju9cespaagm07dzn.png",
+            publicId: "1234"
         },
     ]
 
