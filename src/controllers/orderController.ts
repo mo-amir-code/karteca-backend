@@ -93,7 +93,7 @@ export const fetchUserOrderById = TryCatch(async (req, res, next) => {
     ...newOrder,
     product:{
       ...newOrder.product,
-      thumbnail: newOrder.product.url
+      thumbnail: newOrder.product.thumbnail.url
     }
   }
 

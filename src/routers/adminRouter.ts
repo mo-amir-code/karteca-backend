@@ -1,5 +1,5 @@
 import express, { Router } from "express";
-import { activeUpi, createAdmin, createCategory, createProduct, deleteImage, fetchProductCategory, fetchTransactionRequests, fetchUserCount, fetchWithdrawalRequests, getAdminUpis, uploadImage } from "../controllers/adminController.js";
+import { activeUpi, createAdmin, createCategory, createChildCategory, createProduct, deleteImage, fetchProductCategory, fetchTransactionRequests, fetchUserCount, fetchWithdrawalRequests, getAdminUpis, uploadImage } from "../controllers/adminController.js";
 import multer from "multer"
 
 
@@ -18,6 +18,7 @@ router
    .post("/product/image/upload", uploadImage)
    .delete("/product/image", deleteImage)
    .post("/category", createCategory)
+   .post("/child/category", createChildCategory)
    .patch("/create", createAdmin)
    .patch("/upi/active", activeUpi)
    

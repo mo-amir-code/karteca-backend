@@ -5,7 +5,7 @@ import Product from "../models/Product.js";
 import TxnVerifyRequest from "../models/TxnVerifyRequest.js";
 import User from "../models/User.js";
 import WithdrawalRequest from "../models/WithdrawalRequest.js";
-import { ChildCategoryType, CreateCategoryType, CreateProductType } from "../types/admin.js";
+import { ChildCategoryType, ChildCreateCategoryType, CreateCategoryType, CreateProductType } from "../types/admin.js";
 import { deleteImageOnCloudinary, uploadImageOnCloudinary } from "../utils/uploadOnCloudinary.js";
 import ErrorHandler from "../utils/utility-class.js";
 
@@ -154,50 +154,74 @@ export const deleteImage = TryCatch(async (req, res, next) => {
 });
 
 export const createCategory = TryCatch(async (req, res, next) => {
-    const { parentName, childName, parentImage, childImage } = req.body as CreateCategoryType;
+    const { parentName, parentImage } = req.body as CreateCategoryType;
 
-    if(!parentName || !childName || !parentImage || !childImage){
+    if(!parentName || !parentImage){
         return next(new ErrorHandler("Required fields is/are empty", 400));
     }
 
     const category = await CategoriesWithImage.findOne({ "parent.name":parentName.toLowerCase() });
 
     if(category){
-        category.childs.push({
-            name: childName.toLowerCase(),
-            image: childImage.url,
-            publicId: childImage.publicId
-        });
-        await category.save();
-
-        return res.status(200).json({
+        return res.status(409).json({
             success: true,
-            message: `Sub category added of ${parent} category`
+            message: "Category is already exist"
         });
     }
 
     await CategoriesWithImage.create({
-        parent: {
-            name: parentName.toLowerCase(),
+        parent:{
+            name:parentName.toLowerCase(),
             image: parentImage.url,
             publicId: parentImage.publicId
-        },
-        childs: [
-            {
-                name: childName.toLowerCase(),
-                image: childImage.url,
-                publicId: childImage.publicId
-            }
-        ]
+        }
     });
     
 
     return res.status(200).json({
         success: true,
-        message: "Category and sub category created"
+        message: "Category created"
     });
 
     
+});
+
+export const createChildCategory = TryCatch(async (req, res, next) => {
+    const { childImage, childName, parentName } = req.body as ChildCreateCategoryType;
+
+    if(!childName || !childImage || !parentName){
+        return next(new ErrorHandler("Required fields is/are empty", 400));
+    }
+
+    const category = await CategoriesWithImage.findOne({ "parent.name":parentName.toLowerCase() });
+
+    if(!category){
+        return res.status(400).json({
+            success: true,
+            message: "Parent category not found"
+        });
+    }
+
+    const isChildCategoryExist = category.childs.find((child:any) => child.name.toString() === childName.toString().toLowerCase())
+
+    if(isChildCategoryExist){
+        return res.status(409).json({
+            success: true,
+            message: "Child category is already exist"
+        });
+    }    
+
+    category.childs.push({
+        name: childName.toLowerCase(),
+        image: childImage.url,
+        publicId: childImage.publicId
+    });
+    await category.save();
+
+    return res.status(200).json({
+        success: true,
+        message: "Child category created"
+    });
 });
 
 export const createAdmin = TryCatch(async (req, res, next) => {

@@ -41,11 +41,14 @@ export interface CreateProductType {
 
 export interface CreateCategoryType {
   parentName: string;
-  childName: string;
   parentImage: ImageType;
-  childImage: ImageType;
 }
 
+export interface ChildCreateCategoryType {
+  parentName: string;
+  childName: string;
+  childImage: ImageType;
+}
 type ImageType = {
   url: string;
   publicId: string;
