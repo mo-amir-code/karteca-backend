@@ -5,7 +5,7 @@ import Product from "../models/Product.js";
 import TxnVerifyRequest from "../models/TxnVerifyRequest.js";
 import User from "../models/User.js";
 import WithdrawalRequest from "../models/WithdrawalRequest.js";
-import { ChildCategoryType, ChildCreateCategoryType, CreateCategoryType, CreateProductType } from "../types/admin.js";
+import { ChildCategoryType, ChildCreateCategoryType, CreateCategoryType, CreateProductType, ObjectType } from "../types/admin.js";
 import { deleteImageOnCloudinary, uploadImageOnCloudinary } from "../utils/uploadOnCloudinary.js";
 import ErrorHandler from "../utils/utility-class.js";
 
@@ -84,13 +84,23 @@ export const fetchUserCount = TryCatch(async (req, res, next) => {
 export const createProduct = TryCatch(async (req, res, next) => {
     const data = req.body as CreateProductType;
 
-    await Product.create(data);
+    const objects = arrayToObject(data.specifications);
+
+    await Product.create({...data, specifications:objects});
 
     return res.status(200).json({
         success: true,
         message: "Product created"
     });
 });
+
+function arrayToObject(arr:[{field:string, value:string}]) {
+    const obj: { [field:string]: string } = {};
+    arr.forEach(({ field, value }: ObjectType) => {
+        obj[field as string] = value;
+    });
+    return obj;
+}
 
 export const fetchProductCategory = TryCatch(async (req, res, next) => {
     const { parentCategory } = req.query;

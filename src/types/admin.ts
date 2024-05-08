@@ -36,13 +36,15 @@ export interface CreateProductType {
     serviceType: string;
     covered: string;
   };
-  specifications: object;
+  specifications: [ObjectType];
 }
 
 export interface CreateCategoryType {
   parentName: string;
   parentImage: ImageType;
 }
+
+export type ObjectType = {field:string, value:string}
 
 export interface ChildCreateCategoryType {
   parentName: string;

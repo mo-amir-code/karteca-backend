@@ -99,7 +99,7 @@ export const getProductById = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("Product Id is not found.", 400));
   }
 
-  let product = await Product.findById(productId).select("-ownerId");
+  let product = await Product.findById(productId).select("-ownerId -sellerId -category");
 
   if(!product){
     return next(new ErrorHandler("Product not found", 400));
