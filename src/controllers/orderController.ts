@@ -27,9 +27,20 @@ export const fetchUserOrder = TryCatch(async (req, res, next) => {
     });
   }
 
-  const orders = await Order.find({ userId }).populate({
+  let orders = await Order.find({ userId }).populate({
     path: "product",
     select: "title thumbnail"
+  });
+
+  orders = orders.map((order) => {
+    const newOrder = JSON.parse(JSON.stringify(order));
+    return {
+      ...newOrder,
+      product:{
+        ...newOrder.product,
+        thumbnail: newOrder.product.thumbnail.url
+      }
+    }
   });
 
   await redis.set(`userOrders-${userId}`, JSON.stringify(orders));
@@ -61,7 +72,7 @@ export const fetchUserOrderById = TryCatch(async (req, res, next) => {
     });
   }
 
-  const order = await Order.findById(orderId).select(" -color -refund -userId -createdAt").populate([
+  let order = await Order.findById(orderId).select(" -color -refund -userId -createdAt").populate([
     {
       path: "product",
       select: "_id title thumbnail description",
@@ -75,6 +86,8 @@ export const fetchUserOrderById = TryCatch(async (req, res, next) => {
       select: "status amount -_id",
     },
   ]);
+
+  order.product.thumbnail = order.product.thumbnail.url;
 
   await redis.set(`userOrderDetails-${orderId}`, JSON.stringify(order));
 
