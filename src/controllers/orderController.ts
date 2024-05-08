@@ -87,7 +87,15 @@ export const fetchUserOrderById = TryCatch(async (req, res, next) => {
     },
   ]);
 
-  order.product.thumbnail = order.product.thumbnail.url;
+  const newOrder = JSON.parse(JSON.stringify(order));
+
+  order = {
+    ...newOrder,
+    product:{
+      ...newOrder.product,
+      thumbnail: newOrder.product.url
+    }
+  }
 
   await redis.set(`userOrderDetails-${orderId}`, JSON.stringify(order));
 
