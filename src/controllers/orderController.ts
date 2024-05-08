@@ -146,7 +146,6 @@ export const createOrders = TryCatch(async (req, res, next) => {
     const coinBalanceAmount = returnWalletAmount({totalAmount:totalAmount, amount:wallet.amount, name:wallet.name});
     txnData.wallet!.amount = coinBalanceAmount;
     totalAmount -= coinBalanceAmount
-    await clearCreateOrderCachedRedis({userId})
   }
 
   const newTransaction = await Transaction.create(txnData);
@@ -163,7 +162,6 @@ export const createOrders = TryCatch(async (req, res, next) => {
   await Order.create(newOrders);
 
   if(paymentMode === "cash"){
-    await clearCreateOrderCachedRedis({userId:userId})
     return res.status(200).json({
       success: true,
       message: "Order placed",
@@ -174,7 +172,6 @@ export const createOrders = TryCatch(async (req, res, next) => {
   if(totalAmount <= (wallet?.amount || 0) && wallet?.name !== "coinBalance"){
     newTransaction.status = "success";
     await newTransaction.save();
-    await clearCreateOrderCachedRedis({userId});
     switch (wallet?.name) {
       case "mainBalance":
         const user = await User.findById(userId);
@@ -206,6 +203,8 @@ export const createOrders = TryCatch(async (req, res, next) => {
   const paymentQrCodeUrl = await makePayment({totalAmount, email});
   newTransaction.paymentQrCodeUrl = paymentQrCodeUrl;
   await newTransaction.save();
+
+  await clearCreateOrderCachedRedis({userId})
 
   return res.status(200).json({
     success: true,
