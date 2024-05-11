@@ -6,6 +6,7 @@ import TxnVerifyRequest from "../models/TxnVerifyRequest.js";
 import User from "../models/User.js";
 import WithdrawalRequest from "../models/WithdrawalRequest.js";
 import { ChildCategoryType, ChildCreateCategoryType, CreateCategoryType, CreateProductType, ObjectType } from "../types/admin.js";
+import { redis } from "../utils/Redis.js";
 import { deleteImageOnCloudinary, uploadImageOnCloudinary } from "../utils/uploadOnCloudinary.js";
 import ErrorHandler from "../utils/utility-class.js";
 
@@ -187,13 +188,12 @@ export const createCategory = TryCatch(async (req, res, next) => {
         }
     });
     
+    await redis.del("productCategoriesWithImage");
 
     return res.status(200).json({
         success: true,
         message: "Category created"
     });
-
-    
 });
 
 export const createChildCategory = TryCatch(async (req, res, next) => {
@@ -227,6 +227,8 @@ export const createChildCategory = TryCatch(async (req, res, next) => {
         publicId: childImage.publicId
     });
     await category.save();
+
+    await redis.del("productCategoriesWithImage");
 
     return res.status(200).json({
         success: true,

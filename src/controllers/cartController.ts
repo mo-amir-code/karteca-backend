@@ -60,6 +60,7 @@ export const getCartCountByUserId = TryCatch(async (req, res, next) => {
   if(catchedCartCounts){
     return res.status(200).json({
       success: true,
+      message: "Cart count fetched",
       data: JSON.parse(catchedCartCounts),
     });
   }
@@ -71,6 +72,7 @@ export const getCartCountByUserId = TryCatch(async (req, res, next) => {
 
   return res.status(200).json({
     success: true,
+    message: "Cart count fetched",
     data: totalItems,
   });
 }); // redis done
@@ -87,6 +89,7 @@ export const getWallets = TryCatch(async (req, res, next) => {
   if(catchedCheckoutWallets){
     return res.status(200).json({
       success: true,
+      message: "Checkout wallets fetched",
       data: JSON.parse(catchedCheckoutWallets),
     });
   }
@@ -104,6 +107,7 @@ export const getWallets = TryCatch(async (req, res, next) => {
 
   return res.status(200).json({
     success: true,
+    message: "Checkout wallets fetched",
     data: data
   });
 }); // redis done

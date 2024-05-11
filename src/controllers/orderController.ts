@@ -5,7 +5,7 @@ import ErrorHandler from "../utils/utility-class.js";
 import Transaction from "../models/Transaction.js";
 import User from "../models/User.js";
 import { redis } from "../utils/Redis.js";
-import Cart from "../models/Cart.js";
+// import Cart from "../models/Cart.js";
 import { makePayment } from "../middlewares/payment.js";
 import ReferMember from "../models/ReferMember.js";
 import { clearCreateOrderCachedRedis, returnWalletAmount } from "../utils/services.js";
@@ -56,10 +56,7 @@ export const fetchUserOrderById = TryCatch(async (req, res, next) => {
   const { orderId } = req.params;
 
   if (!orderId) {
-    return res.status(400).json({
-      status: "failed",
-      message: "Something missing.",
-    });
+    return next(new ErrorHandler("Something is missing", 400));
   }
 
   const cachedOrderDetails = await redis.get(`userOrderDetails-${orderId}`);
@@ -124,7 +121,7 @@ export const createOrders = TryCatch(async (req, res, next) => {
     0
   );
 
-  const {email, coinBalance, mainBalance} = await User.findById(userId).select("name email phone coinBalance mainBalance");
+  const {email, coinBalance, mainBalance} = await User.findById(userId).select("email coinBalance mainBalance");
   const { currentReferralEarning } = await ReferMember.findOne({ userId:userId })
 
   if(wallet){
