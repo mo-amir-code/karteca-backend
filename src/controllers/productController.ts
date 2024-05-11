@@ -14,13 +14,13 @@ import CategoriesWithImage from "../models/CategoriesWithImage.js";
 import { CategoryWithImageType } from "../types/product.js";
 
 export const getTopProducts = TryCatch(async (req, res) => {
-  const cathedData = await redis.get("topProducts");
+  const cachedData = await redis.get("topProducts");
 
-  if (cathedData) {
+  if (cachedData) {
     return res.status(200).json({
       success: true,
       message: "Top Products fetched. catched",
-      data: JSON.parse(cathedData),
+      data: JSON.parse(cachedData),
     });
   }
 
@@ -43,13 +43,13 @@ export const getTopProducts = TryCatch(async (req, res) => {
 }); // redis done
 
 export const getLatestProducts = TryCatch(async (req, res) => {
-  const cathedData = await redis.get("latestProducts");
+  const cachedData = await redis.get("latestProducts");
 
-  if (cathedData) {
+  if (cachedData) {
     return res.status(200).json({
       success: true,
       message: "Latest Product Fetched",
-      data: JSON.parse(cathedData),
+      data: JSON.parse(cachedData),
     });
   }
 
@@ -69,13 +69,13 @@ export const getLatestProducts = TryCatch(async (req, res) => {
 }); // redis done
 
 export const getComboProducts = TryCatch(async (req, res) => {
-  const cathedData = await redis.get("comboProducts");
+  const cachedData = await redis.get("comboProducts");
 
-  if (cathedData) {
+  if (cachedData) {
     return res.status(200).json({
       success: true,
       message: "Combo Products fetched",
-      data: JSON.parse(cathedData),
+      data: JSON.parse(cachedData),
     });
   }
 

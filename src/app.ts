@@ -3,6 +3,7 @@ import cookieParser from "cookie-parser";
 import routers from "./routers/index.js";
 import { connectToMongo } from "./utils/mongoDB.js";
 import { errorHandler } from "./middlewares/error.js";
+import helment from "helmet";
 import morgan from "morgan";
 import cors from "cors"
 import { createCategoriesWithImage, createProducts } from "./utils/createProducts.js";
@@ -25,6 +26,7 @@ const corsOptions = {
 // createProducts(40)
 // createCategoriesWithImage();
 
+app.use(helment())
 app.use(cookieParser());
 connectToMongo();
 app.use(cors(corsOptions));
