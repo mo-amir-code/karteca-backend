@@ -2,7 +2,6 @@ import { TryCatch } from "../middlewares/error.js";
 import Banner from "../models/Banner.js"
 import { redis } from "../utils/Redis.js";
 
-
 export const getHomeSliderBanners = TryCatch(async (req, res, next) => {
 
     const catchedBanners = await redis.get("home-slider-banners");
