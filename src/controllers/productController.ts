@@ -14,7 +14,7 @@ import CategoriesWithImage from "../models/CategoriesWithImage.js";
 import { CategoryWithImageType } from "../types/product.js";
 
 export const getTopProducts = TryCatch(async (req, res) => {
-  const cachedData = await redis.get("topProducts");
+  const cachedData = await redis?.get("topProducts");
 
   if (cachedData) {
     return res.status(200).json({
@@ -33,7 +33,7 @@ export const getTopProducts = TryCatch(async (req, res) => {
     topProducts
   );
 
-  await redis.set("topProducts", JSON.stringify(updatedTopProducts));
+  await redis?.set("topProducts", JSON.stringify(updatedTopProducts));
 
   return res.status(200).json({
     success: true,
@@ -43,7 +43,7 @@ export const getTopProducts = TryCatch(async (req, res) => {
 }); // redis done
 
 export const getLatestProducts = TryCatch(async (req, res) => {
-  const cachedData = await redis.get("latestProducts");
+  const cachedData = await redis?.get("latestProducts");
 
   if (cachedData) {
     return res.status(200).json({
@@ -59,7 +59,7 @@ export const getLatestProducts = TryCatch(async (req, res) => {
     .limit(5);
   latestProducts = await formatProductsDataForProductCard(latestProducts);
 
-  await redis.set("latestProducts", JSON.stringify(latestProducts));
+  await redis?.set("latestProducts", JSON.stringify(latestProducts));
 
   return res.status(200).json({
     success: true,
@@ -69,7 +69,7 @@ export const getLatestProducts = TryCatch(async (req, res) => {
 }); // redis done
 
 export const getComboProducts = TryCatch(async (req, res) => {
-  const cachedData = await redis.get("comboProducts");
+  const cachedData = await redis?.get("comboProducts");
 
   if (cachedData) {
     return res.status(200).json({
@@ -83,7 +83,7 @@ export const getComboProducts = TryCatch(async (req, res) => {
 
   comboProducts = await formatProductsDataForProductCard(comboProducts);
 
-  await redis.set("comboProducts", JSON.stringify(comboProducts));
+  await redis?.set("comboProducts", JSON.stringify(comboProducts));
 
   return res.status(200).json({
     success: true,
@@ -114,14 +114,14 @@ export const getProductById = TryCatch(async (req, res, next) => {
 
   let rate;
 
-  const catchedRating = await redis.get(`product-rating-${productId}`);
+  const catchedRating = await redis?.get(`product-rating-${productId}`);
 
   if (!catchedRating) {
     const ratingAndReviews = await RatingAndReviews.find({
       product: product._id,
     });
     rate = await calculateRatingAndReviews(ratingAndReviews);
-    await redis.set(`product-rating-${productId}`, JSON.stringify(rate));
+    await redis?.set(`product-rating-${productId}`, JSON.stringify(rate));
   } else {
     rate = JSON.parse(catchedRating);
   }
@@ -135,7 +135,7 @@ export const getProductById = TryCatch(async (req, res, next) => {
     totalReviews,
   };
 
-  await redis.set(`product-details-${product._id}`, JSON.stringify(newProduct));
+  await redis?.set(`product-details-${product._id}`, JSON.stringify(newProduct));
 
   return res.status(200).json({
     success: true,
@@ -245,7 +245,7 @@ export const searchProduct = TryCatch(async (req, res) => {
     filteredProducts.map(async (item) => {
       const newItem = await JSON.parse(JSON.stringify(item));
 
-      const catchedRatingAndReviews = await redis.get(
+      const catchedRatingAndReviews = await redis?.get(
         `product-ratingAndReviews-${item._id}`
       );
 
@@ -265,7 +265,7 @@ export const searchProduct = TryCatch(async (req, res) => {
         ratingAndReviews
       );
 
-      await redis.set(
+      await redis?.set(
         `product-ratingAndReviews-${item._id}`,
         JSON.stringify({
           totalReviews,
@@ -308,7 +308,7 @@ export const searchProduct = TryCatch(async (req, res) => {
 });
 
 export const getCategories = TryCatch(async (req, res, next) => {
-  const catchedCategories = await redis.get("productCategories");
+  const catchedCategories = await redis?.get("productCategories");
 
   if (catchedCategories) {
     return res.status(200).json({
@@ -332,7 +332,7 @@ export const getCategories = TryCatch(async (req, res, next) => {
     };
   });
 
-  await redis.set("productCategories", JSON.stringify(filteredCategories));
+  await redis?.set("productCategories", JSON.stringify(filteredCategories));
 
   return res.status(200).json({
     success: true,
@@ -342,7 +342,7 @@ export const getCategories = TryCatch(async (req, res, next) => {
 }); // redis done
 
 export const getCategoriesWithImage = TryCatch(async (req, res, next) => {
-  const catchedCategories = await redis.get("productCategoriesWithImage");
+  const catchedCategories = await redis?.get("productCategoriesWithImage");
 
   if (catchedCategories) {
     return res.status(200).json({
@@ -359,7 +359,7 @@ export const getCategoriesWithImage = TryCatch(async (req, res, next) => {
     })
     .slice(0, 6);
 
-  await redis.set("productCategoriesWithImage", JSON.stringify(categories));
+  await redis?.set("productCategoriesWithImage", JSON.stringify(categories));
 
   return res.status(200).json({
     success: true,

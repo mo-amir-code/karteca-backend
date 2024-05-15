@@ -78,8 +78,8 @@ export const signup = TryCatch(async (req, res, next) => {
       if(referredLevel) referredLevel.users.push({ earning: 0, isWithdrawalEnabled: false, user: new_user._id}); 
       else await ReferralLevelModel.create({ level: level, userId: referredMember.userId, users: [{ user: new_user._id, earning: 0, isWithdrawalEnabled: false }] });
 
-      await redis.del(`userReferShortDashboard-${referredMember.userId}`);
-      await redis.del(`userReferDashboard-${referredMember.userId}`);
+      await redis?.del(`userReferShortDashboard-${referredMember.userId}`);
+      await redis?.del(`userReferDashboard-${referredMember.userId}`);
 
       referredMember = (await ReferMember.findOne({ referCode: referredMember.referredUserReferCode })) || undefined;
       level += 1;

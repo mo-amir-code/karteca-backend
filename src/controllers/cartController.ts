@@ -13,7 +13,7 @@ export const getCartItemsByUserId = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("UserId is not found.", 400));
   }
 
-  const catchedItems = await redis.get(`userCartItem-${userId}`);
+  const catchedItems = await redis?.get(`userCartItem-${userId}`);
 
   if(catchedItems){
     return res.status(200).json({
@@ -40,7 +40,7 @@ export const getCartItemsByUserId = TryCatch(async (req, res, next) => {
     }
   });
 
-  await redis.set(`userCartItem-${userId}`, JSON.stringify(carts));
+  await redis?.set(`userCartItem-${userId}`, JSON.stringify(carts));
 
   return res.status(200).json({
     success: true,
@@ -55,7 +55,7 @@ export const getCartCountByUserId = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("UserId is not found.", 400));
   }
 
-  const catchedCartCounts = await redis.get(`userCartCounts-${userId}`);
+  const catchedCartCounts = await redis?.get(`userCartCounts-${userId}`);
 
   if(catchedCartCounts){
     return res.status(200).json({
@@ -68,7 +68,7 @@ export const getCartCountByUserId = TryCatch(async (req, res, next) => {
   const cartsId = await Cart.find({ userId }).select("product");
   const totalItems = cartsId.map((it) => it.product);
 
-  await redis.set(`userCartCounts-${userId}`, JSON.stringify(totalItems));
+  await redis?.set(`userCartCounts-${userId}`, JSON.stringify(totalItems));
 
   return res.status(200).json({
     success: true,
@@ -84,7 +84,7 @@ export const getWallets = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("UserId is not found.", 400));
   }
 
-  const catchedCheckoutWallets = await redis.get(`userCheckoutWallets-${userId}`);
+  const catchedCheckoutWallets = await redis?.get(`userCheckoutWallets-${userId}`);
 
   if(catchedCheckoutWallets){
     return res.status(200).json({
@@ -103,7 +103,7 @@ export const getWallets = TryCatch(async (req, res, next) => {
     currentReferralEarning: userReferMember.currentReferralEarning
   }
 
-  await redis.set(`userCheckoutWallets-${userId}`, JSON.stringify(data));
+  await redis?.set(`userCheckoutWallets-${userId}`, JSON.stringify(data));
 
   return res.status(200).json({
     success: true,
@@ -127,8 +127,8 @@ export const createCart = TryCatch(async (req, res, next) => {
   }
 
   await Cart.create(req.body);
-  await redis.del(`userCartItem-${userId}`);
-  await redis.del(`userCartCounts-${userId}`);
+  await redis?.del(`userCartItem-${userId}`);
+  await redis?.del(`userCartCounts-${userId}`);
 
   return res.status(200).json({
     success: true,
@@ -144,8 +144,8 @@ export const deleteCart = TryCatch(async (req, res, next) => {
     }
 
     const cart = await Cart.findByIdAndDelete(cartId);
-    await redis.del(`userCartItem-${cart.userId}`);
-    await redis.del(`userCartCounts-${cart.userId}`);
+    await redis?.del(`userCartItem-${cart.userId}`);
+    await redis?.del(`userCartCounts-${cart.userId}`);
 
     return res.status(200).json({
       success: true,
@@ -161,7 +161,7 @@ export const updateCart = TryCatch(async (req, res, next) => {
         }
 
         const cart = await Cart.findByIdAndUpdate(cartId, req.body);
-        await redis.del(`userCartItem-${cart.userId}`);
+        await redis?.del(`userCartItem-${cart.userId}`);
 
         return res.status(200).json({
             success: true,

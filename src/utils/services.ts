@@ -132,12 +132,12 @@ export const clearCreateOrderCachedRedis = async ({
   userId: string;
 }) => {
   await Cart.deleteMany({ userId: userId });
-  await redis.del(`userOrders-${userId}`);
-  await redis.del(`userCartCounts-${userId}`);
-  await redis.del(`userCartItem-${userId}`);
-  await redis.del(`userCheckoutWallets-${userId}`);
-  await redis.del(`userTransactions-${userId}`);
-  await redis.del(`userCheckoutWallets-${userId}`);
+  await redis?.del(`userOrders-${userId}`);
+  await redis?.del(`userCartCounts-${userId}`);
+  await redis?.del(`userCartItem-${userId}`);
+  await redis?.del(`userCheckoutWallets-${userId}`);
+  await redis?.del(`userTransactions-${userId}`);
+  await redis?.del(`userCheckoutWallets-${userId}`);
 };
 
 export const returnWalletAmount = ({name, amount, totalAmount}:{name?:string | undefined, amount?:number | undefined, totalAmount:number}):number => {
@@ -167,7 +167,7 @@ export const formatProductsDataForProductCard = async (products:ProductCardType[
   return await Promise.all(
     products.map(async (item) => {
 
-      const cachedProduct = await redis.get(`product-details-${item._id}`);
+      const cachedProduct = await redis?.get(`product-details-${item._id}`);
 
       if (cachedProduct) {
         const data = JSON.parse(cachedProduct);

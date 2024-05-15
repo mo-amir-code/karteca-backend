@@ -11,7 +11,7 @@ export const getUserNotifications = TryCatch(async (req, res, next) => {
         return next(new ErrorHandler("User ID not found", 400));
     }
 
-    let catchedNtf = await redis.get(`userNotifications-${userId}`);
+    let catchedNtf = await redis?.get(`userNotifications-${userId}`);
 
     if(catchedNtf){
         return res.status(200).json({
@@ -32,7 +32,7 @@ export const getUserNotifications = TryCatch(async (req, res, next) => {
         notificationCount: nt
     }
 
-    await redis.set(`userNotifications-${userId}`, JSON.stringify(data))
+    await redis?.set(`userNotifications-${userId}`, JSON.stringify(data))
 
     return res.status(200).json({
         success: true,
@@ -53,7 +53,7 @@ export const readUserNotifications = TryCatch(async (req, res, next) => {
         { $set: { isRead: true } }
     );
     
-    await redis.del(`userNotifications-${userId}`);
+    await redis?.del(`userNotifications-${userId}`);
 
     return res.status(200).json({
         success: true,

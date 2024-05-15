@@ -6,7 +6,7 @@ try {
     if (process.env.REDIS_URI) {
         redisInstance = new Redis(process.env.REDIS_URI);
     } else {
-        redisInstance = new Redis(6379);
+        redisInstance = new Redis(process.env.REDIS_LOCAL_PORT!);
     }
 } catch (error) {
     console.error("Redis Error ===> ", error)

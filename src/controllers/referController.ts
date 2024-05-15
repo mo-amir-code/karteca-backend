@@ -34,7 +34,7 @@ export const fetchUserDashboard = TryCatch(async (req, res, next) => {
       return next(new ErrorHandler("Something is missing", 400));
     }
 
-    const catchedUserDashboard = await redis.get(`userReferDashboard-${userId}`);
+    const catchedUserDashboard = await redis?.get(`userReferDashboard-${userId}`);
 
     if(catchedUserDashboard){
       return res.status(200).json({
@@ -102,7 +102,7 @@ export const fetchUserDashboard = TryCatch(async (req, res, next) => {
       withdrawalHistory: withdrawalHistory.reverse()
     }
 
-    await redis.set(`userReferDashboard-${userId}`, JSON.stringify(resData));
+    await redis?.set(`userReferDashboard-${userId}`, JSON.stringify(resData));
     
     return res.status(200).json({
       success: true,
@@ -119,7 +119,7 @@ export const fetchUserShortDashboard = TryCatch(async (req, res, next) => {
       return next(new ErrorHandler("Something is missing", 400));
     }
 
-    const catchedUserDashboard = await redis.get(`userReferShortDashboard-${userId}`);
+    const catchedUserDashboard = await redis?.get(`userReferShortDashboard-${userId}`);
 
     if(catchedUserDashboard){
       return res.status(200).json({
@@ -189,7 +189,7 @@ export const fetchUserShortDashboard = TryCatch(async (req, res, next) => {
       totalDeactive: totalDeactiveConnections
     }
 
-    await redis.set(`userReferShortDashboard-${userId}`, JSON.stringify(resData));
+    await redis?.set(`userReferShortDashboard-${userId}`, JSON.stringify(resData));
     
     return res.status(200).json({
       success: true,

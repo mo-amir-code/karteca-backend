@@ -188,7 +188,7 @@ export const createCategory = TryCatch(async (req, res, next) => {
         }
     });
     
-    await redis.del("productCategoriesWithImage");
+    await redis?.del("productCategoriesWithImage");
 
     return res.status(200).json({
         success: true,
@@ -228,7 +228,7 @@ export const createChildCategory = TryCatch(async (req, res, next) => {
     });
     await category.save();
 
-    await redis.del("productCategoriesWithImage");
+    await redis?.del("productCategoriesWithImage");
 
     return res.status(200).json({
         success: true,

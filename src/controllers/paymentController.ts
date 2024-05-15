@@ -142,10 +142,10 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
         });
 
         // Here I am deleting redis cached data of current refer member
-        await redis.del(`userNotifications-${currentReferMember.userId}`);
-        await redis.del(`userReferDashboard-${currentReferMember.userId}`);
-        await redis.del(`userReferShortDashboard-${currentReferMember.userId}`);
-        await redis.del(`userCheckoutWallets-${currentReferMember.userId}`);
+        await redis?.del(`userNotifications-${currentReferMember.userId}`);
+        await redis?.del(`userReferDashboard-${currentReferMember.userId}`);
+        await redis?.del(`userReferShortDashboard-${currentReferMember.userId}`);
+        await redis?.del(`userCheckoutWallets-${currentReferMember.userId}`);
 
         // Here updating level with 1
         level += 1;
@@ -162,9 +162,9 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
 
 
         // Here I am deleting redis cache of main user
-        await redis.del(`userReferDashboard-${mainUserId}`);
-        await redis.del(`userReferShortDashboard-${mainUserId}`);
-        await redis.del(`userCheckoutWallets-${mainUserId}`);
+        await redis?.del(`userReferDashboard-${mainUserId}`);
+        await redis?.del(`userReferShortDashboard-${mainUserId}`);
+        await redis?.del(`userCheckoutWallets-${mainUserId}`);
 
         // Creating notification for main user of activating withdrawal and adding activation amount as coin balance
       await Notification.create({
@@ -174,7 +174,7 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
       });
 
       // deleting redis cached for mainuser updated notifications
-      await redis.del(`userNotifications-${mainUserId}`);
+      await redis?.del(`userNotifications-${mainUserId}`);
 
       return res.status(200).json({
         success: true,
@@ -196,8 +196,8 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
       | undefined;
 
     if (wallet) {
-      await redis.del(`userCheckoutWallets-${mainUserId}`);
-      await redis.del(`userReferShortDashboard-${mainUserId}`);
+      await redis?.del(`userCheckoutWallets-${mainUserId}`);
+      await redis?.del(`userReferShortDashboard-${mainUserId}`);
 
       switch (wallet?.name) {
         case "mainBalance":
@@ -211,7 +211,7 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
           await coinUser.save();
           break;
         case "currentReferralEarning":
-          await redis.del(`userReferDashboard-${mainUserId}`);
+          await redis?.del(`userReferDashboard-${mainUserId}`);
           const referMember = await ReferMember.findOne({
             userId: mainUserId,
           });
@@ -229,10 +229,10 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
       message: "Your items has been placed to deliver to you",
     });
 
-    await redis.del(`userNotifications-${mainUserId}`);
-    await redis.del(`userOrders-${mainUserId}`);
-    await redis.del(`userCartCounts-${mainUserId}`);
-    await redis.del(`userCartItem-${mainUserId}`);
+    await redis?.del(`userNotifications-${mainUserId}`);
+    await redis?.del(`userOrders-${mainUserId}`);
+    await redis?.del(`userCartCounts-${mainUserId}`);
+    await redis?.del(`userCartItem-${mainUserId}`);
 
     return res.status(200).json({
       success: true,
@@ -280,7 +280,7 @@ export const verifyPaymentRequest = TryCatch(async (req, res, next) => {
     message: "Your transaction request has been sent. Please wait for next 2 hours."
   });
 
-  await redis.del(`userNotifications-${userId}`);
+  await redis?.del(`userNotifications-${userId}`);
 
   let usersMailId = await User.find({ role: "admin" });
   usersMailId = usersMailId.map((user) => user.email);
@@ -397,10 +397,10 @@ export const withdrawalRequest = TryCatch(async (req, res, next) => {
     type: "payment"
   });
 
-  await redis.del(`userNotifications-${userId}`);
-  await redis.del(`userReferDashboard-${userId}`);
-  await redis.del(`userReferShortDashboard-${userId}`);
-  await redis.del(`userCheckoutWallets-${userId}`);
+  await redis?.del(`userNotifications-${userId}`);
+  await redis?.del(`userReferDashboard-${userId}`);
+  await redis?.del(`userReferShortDashboard-${userId}`);
+  await redis?.del(`userCheckoutWallets-${userId}`);
 
   return res.status(200).json({
     success: true,
@@ -438,8 +438,8 @@ export const withdrawalRequestVerification = TryCatch(async (req, res, next) => 
     type: "payment"
    });
 
-   await redis.del(`userNotifications-${withdrawalRequest.userId}`);
-   await redis.del(`userTransactions-${withdrawalRequest.userId}`);
+   await redis?.del(`userNotifications-${withdrawalRequest.userId}`);
+   await redis?.del(`userTransactions-${withdrawalRequest.userId}`);
 
 
    return res.status(200).json({
