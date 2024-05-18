@@ -4,7 +4,14 @@ import Cart from "../models/Cart.js";
 import ReferMember from "../models/ReferMember.js";
 import ReferralLevel from "../models/ReferralLevel.js";
 import Transaction from "../models/Transaction.js";
-import { CancelPaymentType, CreateSubscriptionType, VerifyPaymentBodyType, VerifyPaymentRequestType, WithdrawalRequestType, WithdrawalRequestVerificationType } from "../types/payment.js";
+import {
+  CancelPaymentType,
+  CreateSubscriptionType,
+  VerifyPaymentBodyType,
+  VerifyPaymentRequestType,
+  WithdrawalRequestType,
+  WithdrawalRequestVerificationType,
+} from "../types/payment.js";
 // import { calculateSHA256 } from "../utils/services.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { redis } from "../utils/Redis.js";
@@ -12,32 +19,37 @@ import User from "../models/User.js";
 import Notification from "../models/Notification.js";
 import TxnVerifyRequest from "../models/TxnVerifyRequest.js";
 import { MailOptions, sendMail } from "../utils/sendOTP.js";
-import Subscription from "../models/Subscription.js"
+import Subscription from "../models/Subscription.js";
 import { makePayment } from "../middlewares/payment.js";
 import WithdrawalRequest from "../models/WithdrawalRequest.js";
 
 export const verifyPayment = TryCatch(async (req, res, next) => {
   const { paymentStatus, utrId, isFrom, adminNote } =
     req.body as VerifyPaymentBodyType;
+  const adminId = req.body.adminId;
 
-  if(!paymentStatus || !utrId){
-    return next(new ErrorHandler("Enter all required field(s)", 400))
+  if (!paymentStatus || !utrId) {
+    return next(new ErrorHandler("Enter all required field(s)", 400));
+  }
+
+  if (!adminId) {
+    return next(new ErrorHandler("Internal error occurred", 500));
   }
 
   // updating user transaction
   const transaction = await Transaction.findOne({ utrId });
 
-  if(transaction){
+  if (transaction) {
     transaction.status = paymentStatus;
     // transaction.transactionId = userTransactionId;
   }
 
-  if(paymentStatus !== "success" && transaction) {
+  if (paymentStatus !== "success" && transaction) {
     await transaction.save();
     return res.status(200).json({
       success: true,
-      message: "Transaction status has been updated"
-    })
+      message: "Transaction status has been updated",
+    });
   }
 
   if (paymentStatus === "success" && transaction) {
@@ -48,27 +60,29 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
     await transaction.save();
     // ENd with update
 
-
-
-
     if (isFrom === "subscription") {
-
       // Creating subscription
       const subsData = {
         userId: mainUserId,
         type: "premium",
         transaction: transaction._id,
-        amount: transaction.amount
-      }
+        amount: transaction.amount,
+      };
 
       await Subscription.create(subsData);
       // end of subscription
 
       // Updating transaciton verify request from pending/processing to verified
-      await TxnVerifyRequest.findOneAndUpdate({ utrId },  { status: "verified", admin: {
-        adminId: mainUserId,
-        adminNote
-      } });
+      await TxnVerifyRequest.findOneAndUpdate(
+        { utrId },
+        {
+          status: "verified",
+          admin: {
+            adminId: adminId,
+            adminNote,
+          },
+        }
+      );
       // end of transaction verify request
 
       let level = 1; // initializing level
@@ -100,7 +114,7 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
       while (currentReferMember && level <= 7) {
         // Fetching level wise earning
         let earning = Math.floor(getLevelWiseMoney(level, transaction.amount));
-        
+
         // adding current level earning in current user refer member's currentReferralEarning and totalReferralEarning
         currentReferMember.currentReferralEarning += earning;
         currentReferMember.totalReferralEarning += earning;
@@ -108,24 +122,51 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
         await currentReferMember.save();
 
         // Fetching current refer member with current level and current refer member user id
-        const currentMemberLevel = await ReferralLevel.findOne({
+        let currentMemberLevel = await ReferralLevel.findOne({
           level: level,
-          userId: currentReferMember.userId
+          userId: currentReferMember.userId,
         });
 
         // checking current Member Level is exist
+        // if (currentMemberLevel) {
+        //   // If exist then I adds current level earning, enabling withdrawal permission and main user id
+        //   currentMemberLevel.users.push({
+        //     earning: earning,
+        //     isWithdrawalEnabled: true,
+        //     user: mainUserId,
+        //   });
+        //   // Updating with changes
+        //   await currentMemberLevel.save();
+        // } else {
+        //   // if level not found then I creates with current level, current refer member user id and main user info in users
+        //    await ReferralLevel.create({
+        //     level: level,
+        //     userId: currentReferMember.userId,
+        //     users: [
+        //       { earning: earning, isWithdrawalEnabled: true, user: mainUserId },
+        //     ],
+        //   });
+        // }
+
         if (currentMemberLevel) {
-          // If exist then I adds current level earning, enabling withdrawal permission and main user id
-          currentMemberLevel.users.push({
-            earning: earning,
-            isWithdrawalEnabled: true,
-            user: mainUserId,
-          });
-          // Updating with changes
+          console.log(currentMemberLevel)
+          const userIndex = currentMemberLevel.users.findIndex(
+            (u) => u.user.toString() == mainUserId.toString()
+          );
+          let user = currentMemberLevel.users.find(
+            (u) => u.user.toString() == mainUserId.toString()
+          );
+          console.log(mainUserId.toString())
+          console.log(userIndex, user)
+          user!.earning = earning;
+          user!.isWithdrawalEnabled = true;
+          console.log(userIndex, user)
+          currentMemberLevel.users[userIndex] = user!;
           await currentMemberLevel.save();
         } else {
           // if level not found then I creates with current level, current refer member user id and main user info in users
-           await ReferralLevel.create({
+          // There is no need of this code under else but I added
+          await ReferralLevel.create({
             level: level,
             userId: currentReferMember.userId,
             users: [
@@ -144,29 +185,29 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
         // Here I am deleting redis cached data of current refer member
         await redis?.del(`userNotifications-${currentReferMember.userId}`);
         await redis?.del(`userReferDashboard-${currentReferMember.userId}`);
-        await redis?.del(`userReferShortDashboard-${currentReferMember.userId}`);
+        await redis?.del(
+          `userReferShortDashboard-${currentReferMember.userId}`
+        );
         await redis?.del(`userCheckoutWallets-${currentReferMember.userId}`);
 
         // Here updating level with 1
         level += 1;
 
         // Here I am finding another level user with current refer member referred user refer code if referred code and user exist then it will assign to currentReferMember otherwise null
-        if (currentReferMember.referredUserReferCode){
+        if (currentReferMember.referredUserReferCode) {
           currentReferMember = await ReferMember.findOne({
             referCode: currentReferMember.referredUserReferCode,
           });
-        }
-        else currentReferMember = null;
+        } else currentReferMember = null;
       }
       // End of while loop
 
+      // Here I am deleting redis cache of main user
+      await redis?.del(`userReferDashboard-${mainUserId}`);
+      await redis?.del(`userReferShortDashboard-${mainUserId}`);
+      await redis?.del(`userCheckoutWallets-${mainUserId}`);
 
-        // Here I am deleting redis cache of main user
-        await redis?.del(`userReferDashboard-${mainUserId}`);
-        await redis?.del(`userReferShortDashboard-${mainUserId}`);
-        await redis?.del(`userCheckoutWallets-${mainUserId}`);
-
-        // Creating notification for main user of activating withdrawal and adding activation amount as coin balance
+      // Creating notification for main user of activating withdrawal and adding activation amount as coin balance
       await Notification.create({
         userId: mainUserId,
         type: "payment",
@@ -183,10 +224,16 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
     }
 
     // Updating transaciton verify request from pending/processing to verified
-    await TxnVerifyRequest.findOneAndUpdate({ utrId },  { status: "verified", admin: {
-      adminId: mainUserId,
-      adminNote
-    } });
+    await TxnVerifyRequest.findOneAndUpdate(
+      { utrId },
+      {
+        status: "verified",
+        admin: {
+          adminId: adminId,
+          adminNote,
+        },
+      }
+    );
     // end of transaction verify request
 
     await Cart.deleteMany({ userId: transaction?.userId });
@@ -215,7 +262,8 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
           const referMember = await ReferMember.findOne({
             userId: mainUserId,
           });
-          referMember.currentReferralEarning = referMember.currentReferralEarning - wallet?.amount;
+          referMember.currentReferralEarning =
+            referMember.currentReferralEarning - wallet?.amount;
           await referMember.save();
           break;
         default:
@@ -265,9 +313,10 @@ const getLevelWiseMoney = (level: number, amount: number) => {
 };
 
 export const verifyPaymentRequest = TryCatch(async (req, res, next) => {
-  const { amount, userId, utrId, transactionId, isFrom } = req.body as VerifyPaymentRequestType;
+  const { amount, userId, utrId, transactionId, isFrom } =
+    req.body as VerifyPaymentRequestType;
 
-  if(!amount || !userId || !utrId || !transactionId){
+  if (!amount || !userId || !utrId || !transactionId) {
     return next(new ErrorHandler("Required fields is/are empty", 400));
   }
 
@@ -277,7 +326,8 @@ export const verifyPaymentRequest = TryCatch(async (req, res, next) => {
   await Notification.create({
     userId,
     type: "payment",
-    message: "Your transaction request has been sent. Please wait for next 2 hours."
+    message:
+      "Your transaction request has been sent. Please wait for next 2 hours.",
   });
 
   await redis?.del(`userNotifications-${userId}`);
@@ -285,28 +335,29 @@ export const verifyPaymentRequest = TryCatch(async (req, res, next) => {
   let usersMailId = await User.find({ role: "admin" });
   usersMailId = usersMailId.map((user) => user.email);
 
-  if(usersMailId.length === 0) usersMailId.push(process.env.ADMIN_MAIL_ID);
+  if (usersMailId.length === 0) usersMailId.push(process.env.ADMIN_MAIL_ID);
 
-  const mailData:MailOptions = {
-      from:'Karteca Pvt. Ltd.',
-      to: usersMailId,
-      subject: `Payment Verification Request for ${isFrom === "subscription"? "Subscription" : "Shopping"}`,
-      html: `You got a new payment verification request for ₹${amount}`,
-  }
+  const mailData: MailOptions = {
+    from: "Karteca Pvt. Ltd.",
+    to: usersMailId,
+    subject: `Payment Verification Request for ${
+      isFrom === "subscription" ? "Subscription" : "Shopping"
+    }`,
+    html: `You got a new payment verification request for ₹${amount}`,
+  };
 
   await sendMail(mailData);
 
   return res.status(200).json({
     success: true,
-    message: "Transaction Verification Request Sent"
+    message: "Transaction Verification Request Sent",
   });
-
 });
 
 export const cancelPayment = TryCatch(async (req, res, next) => {
   const { transactionId } = req.body as CancelPaymentType;
 
-  if(!transactionId){
+  if (!transactionId) {
     return next(new ErrorHandler("Required fields is/are empty", 400));
   }
 
@@ -314,16 +365,16 @@ export const cancelPayment = TryCatch(async (req, res, next) => {
 
   return res.status(200).json({
     success: true,
-    message: "Transaction Verification Request Sent"
+    message: "Transaction Verification Request Sent",
   });
 });
 
 export const createSubscription = TryCatch(async (req, res, next) => {
-  const { userId, amount, type } = req.body as CreateSubscriptionType
+  const { userId, amount, type } = req.body as CreateSubscriptionType;
 
   const user = await User.findById(userId);
 
-  if(!userId || !amount || !type || !user){
+  if (!userId || !amount || !type || !user) {
     return next(new ErrorHandler("Required field(s) is/are missing", 400));
   }
 
@@ -331,13 +382,15 @@ export const createSubscription = TryCatch(async (req, res, next) => {
     userId,
     type: "credit",
     mode: "subscription",
-    amount
-  }
+    amount,
+  };
 
   const txn = await Transaction.create(txnData);
 
-
-  const paymentQrCodeUrl = await makePayment({email: user.email, totalAmount: amount});
+  const paymentQrCodeUrl = await makePayment({
+    email: user.email,
+    totalAmount: amount,
+  });
 
   txn.paymentQrCodeUrl = paymentQrCodeUrl;
   await txn.save();
@@ -347,33 +400,31 @@ export const createSubscription = TryCatch(async (req, res, next) => {
     message: "Subscription payment order created",
     data: {
       paymentQrCodeUrl,
-      transactionId: txn._id
-    }
+      transactionId: txn._id,
+    },
   });
-
 });
 
 export const withdrawalRequest = TryCatch(async (req, res, next) => {
   const { amount, userId, upi } = req.body as WithdrawalRequestType;
 
-  if(!amount || !userId || !upi){
+  if (!amount || !userId || !upi) {
     return next(new ErrorHandler("Required field(s) is/are missing", 400));
   }
 
   const isExist = await User.findById(userId).select("_id");
-  
-  if(!isExist){
+
+  if (!isExist) {
     return next(new ErrorHandler("Enter valid user id", 401));
   }
-  
 
   const referMember = await ReferMember.findOne({ userId });
 
-  if(!referMember){
+  if (!referMember) {
     return next(new ErrorHandler("Something went wrong!", 401));
   }
 
-  if(amount > referMember.currentReferralEarning){
+  if (amount > referMember.currentReferralEarning) {
     return next(new ErrorHandler("Something went wrong!", 401));
   }
 
@@ -385,16 +436,16 @@ export const withdrawalRequest = TryCatch(async (req, res, next) => {
     userId,
     amount,
     to: {
-      upi
-    }
-  }
+      upi,
+    },
+  };
 
   await WithdrawalRequest.create(withdrawalRequestData);
 
   await Notification.create({
     userId,
     message: `Withdrawal request has been sent and ₹${amount} on hold until withdrawal verification`,
-    type: "payment"
+    type: "payment",
   });
 
   await redis?.del(`userNotifications-${userId}`);
@@ -404,47 +455,51 @@ export const withdrawalRequest = TryCatch(async (req, res, next) => {
 
   return res.status(200).json({
     success: true,
-    message: "Amount will be sent to your upi id under 6 hours"
+    message: "Amount will be sent to your upi id under 6 hours",
   });
 });
 
-export const withdrawalRequestVerification = TryCatch(async (req, res, next) => {
-  const { upi, utrId, withdrawalRequestId, withdrawalStatus } = req.body as WithdrawalRequestVerificationType;
+export const withdrawalRequestVerification = TryCatch(
+  async (req, res, next) => {
+    const { upi, utrId, withdrawalRequestId, withdrawalStatus } =
+      req.body as WithdrawalRequestVerificationType;
 
-  if(!upi || !utrId || !withdrawalRequestId || !withdrawalStatus){
-    return next(new ErrorHandler("Required fields is/are empty", 400));
-  }
-
-  const withdrawalRequest = await WithdrawalRequest.findByIdAndUpdate(withdrawalRequestId, { 
-    utrId,
-    status: "success",
-    from:{
-      upi
+    if (!upi || !utrId || !withdrawalRequestId || !withdrawalStatus) {
+      return next(new ErrorHandler("Required fields is/are empty", 400));
     }
-   });
 
-   await Transaction.create({
-    userId: withdrawalRequest.userId,
-    type: "withdrawal",
-    mode: "referral",
-    utrId,
-    amount: withdrawalRequest.amount,
-    status: "success"
-   });
+    const withdrawalRequest = await WithdrawalRequest.findByIdAndUpdate(
+      withdrawalRequestId,
+      {
+        utrId,
+        status: "success",
+        from: {
+          upi,
+        },
+      }
+    );
 
-   await Notification.create({
-    userId: withdrawalRequest.userId,
-    message: `₹${withdrawalRequest.amount} has been sent to your upi id`,
-    type: "payment"
-   });
+    await Transaction.create({
+      userId: withdrawalRequest.userId,
+      type: "withdrawal",
+      mode: "referral",
+      utrId,
+      amount: withdrawalRequest.amount,
+      status: "success",
+    });
 
-   await redis?.del(`userNotifications-${withdrawalRequest.userId}`);
-   await redis?.del(`userTransactions-${withdrawalRequest.userId}`);
+    await Notification.create({
+      userId: withdrawalRequest.userId,
+      message: `₹${withdrawalRequest.amount} has been sent to your upi id`,
+      type: "payment",
+    });
 
+    await redis?.del(`userNotifications-${withdrawalRequest.userId}`);
+    await redis?.del(`userTransactions-${withdrawalRequest.userId}`);
 
-   return res.status(200).json({
-    success: true,
-    message: "Updated"
-   });
-
-});
+    return res.status(200).json({
+      success: true,
+      message: "Updated",
+    });
+  }
+);

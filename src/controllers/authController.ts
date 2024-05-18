@@ -75,7 +75,10 @@ export const signup = TryCatch(async (req, res, next) => {
 
     while(referredMember && level <= 7){
       const referredLevel = await ReferralLevelModel.findOne({ $and: [{ userId: referredMember.userId }, { level: level }] });
-      if(referredLevel) referredLevel.users.push({ earning: 0, isWithdrawalEnabled: false, user: new_user._id}); 
+      if(referredLevel){
+        referredLevel.users.push({ earning: 0, isWithdrawalEnabled: false, user: new_user._id});
+        await referredLevel.save();
+      } 
       else await ReferralLevelModel.create({ level: level, userId: referredMember.userId, users: [{ user: new_user._id, earning: 0, isWithdrawalEnabled: false }] });
 
       await redis?.del(`userReferShortDashboard-${referredMember.userId}`);

@@ -65,7 +65,7 @@ export const isAdminValidRequest = TryCatch(async (req, res, next) => {
     const data = jwt.verify(sessiontoken, process.env.JWT_SECRET_KEY!);
     const { userId, exp } = data as { userId: string; exp: number };
 
-    user = await User.findById(userId).select("sessionToken role");
+    user = await User.findById(userId).select("sessionToken role _id");
 
     if (user.sessionToken !== sessiontoken) {
       user.sessionToken = undefined;
@@ -96,6 +96,8 @@ export const isAdminValidRequest = TryCatch(async (req, res, next) => {
     if(user.role !== "admin"){
       return next(new ErrorHandler("You have not admin permission", 403));
     }
+
+    req.body.adminId = user._id
 
     next();
   } catch (error) {
