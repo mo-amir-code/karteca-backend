@@ -10,7 +10,7 @@ import { createCategoriesWithImage, createProducts } from "./utils/createProduct
 
 const app: Express = express();
 
-const whitelist = [process.env.CLIENT_ORIGIN]
+const whitelist = [process.env.CLIENT_ORIGIN, process.env.CLIENT_ORIGIN2]
 
 const corsOptions = {
     origin: function (origin:any, callback:any) {
