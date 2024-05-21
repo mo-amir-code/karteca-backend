@@ -93,7 +93,7 @@ export const signup = TryCatch(async (req, res, next) => {
 });
 
 export const sendOTP = TryCatch(async (req, res, next) => {
-  const { userId, isFromForgotPassword } = req.body;
+  const { userId, from, email } = req.body;
   const user: UserType | null = await User.findById(userId);
 
   if (!user) {
@@ -111,19 +111,26 @@ export const sendOTP = TryCatch(async (req, res, next) => {
 
   let mailOption: MailOptions;
 
-  if (!isFromForgotPassword) {
+  if (!from) {
     mailOption = {
-      from:'karteca.in OTP Verification',
+      from:`${process.env.COMPANY_NAME}.com OTP Verification`,
       to: [user.email],
       subject: "OTP to verify your account.",
       html: `Your OTP is ${otp}, and click <a href="${process.env.CLIENT_ORIGIN}/auth/verify?token=${otpToken}">here</a> to verify your account`,
     };
-  } else {
+  } else if (from === "forgotPassword") {
     mailOption = {
-      from:'karteca.in OTP Verification',
+      from:`${process.env.COMPANY_NAME}.com OTP Verification`,
       to: [user.email],
       subject: "OTP to change your password.",
       html: `Your OTP is ${otp}, and click <a href="${process.env.CLIENT_ORIGIN}/auth/reset-password?token=${otpToken}">here</a> to reset your password.`,
+    };
+  } else{
+    mailOption = {
+      from:`${process.env.COMPANY_NAME}.com OTP Verification`,
+      to: [email],
+      subject: "OTP to verify your new email.",
+      html: `Your OTP is ${otp}.`,
     };
   }
 
@@ -153,7 +160,7 @@ export const sendOTP = TryCatch(async (req, res, next) => {
 });
 
 export const verify = TryCatch(async (req, res, next) => {
-    const { otp } = req.body as { otp?: number };
+    const { otp, from } = req.body as { otp?: number, from?: "signup" | "newEmail" | "withdrawalMoney" };
     const token = req.cookies["otptoken"];
 
     if (!token || !otp) {
@@ -180,6 +187,19 @@ export const verify = TryCatch(async (req, res, next) => {
     if (!(user.otpExpiry > Date.now())) {
       return next(new ErrorHandler("OTP is expired.", 400));
     }
+
+    if(from === "newEmail"){
+      user.otp = undefined;
+      user.otpExpiry = undefined;
+      user.otpToken = undefined;
+      await user.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "Email has been verified"
+      });
+    }
+
 
     const sessionToken = jwt.sign({ userId }, jwtSecretKey, { expiresIn:JWT_AGE_15_MIN } );
 
@@ -300,7 +320,7 @@ export const forgotPassword = TryCatch(async (
     }
 
     req.body.userId = user._id;
-    req.body.isFromForgotPassword = true;
+    req.body.from = "forgotPassword";
     next();
 });
 

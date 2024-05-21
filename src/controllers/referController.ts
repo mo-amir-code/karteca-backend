@@ -147,8 +147,6 @@ export const fetchUserShortDashboard = TryCatch(async (req, res, next) => {
           return totalActive
       },  0);
 
-      const withdrawalDisabledUsers = lvl.users.length - withdrawalEnabledUsers;
-
       const earnedMoney = lvl.users.reduce((total:number, current:ReferLevelUser) => {
         if(current.isWithdrawalEnabled)
           return total + current.earning;
@@ -158,9 +156,9 @@ export const fetchUserShortDashboard = TryCatch(async (req, res, next) => {
 
       return {
         level: lvl.level,
-        withdrawalDisabledUsers,
         withdrawalEnabledUsers,
-        earning: earnedMoney
+        earning: earnedMoney,
+        totalConnectionsPerLevel: lvl.users.length
       }
 
     });
@@ -168,9 +166,9 @@ export const fetchUserShortDashboard = TryCatch(async (req, res, next) => {
     if(!levelsEarning.length){
       levelsEarning = [{
         level: 1,
-        withdrawalDisabledUsers: 0,
         withdrawalEnabledUsers: 0,
-        earning: 0
+        earning: 0,
+        totalConnectionsPerLevel:0
       }];
     }
 
@@ -178,15 +176,15 @@ export const fetchUserShortDashboard = TryCatch(async (req, res, next) => {
       return total + current.withdrawalEnabledUsers;
     }, 0);
 
-    const totalDeactiveConnections = levelsEarning.reduce((total: number, current: LevelEarningType) => {
-      return total + current.withdrawalDisabledUsers;
+    const totalConnections = levelsEarning.reduce((total: number, current: LevelEarningType) => {
+      return total + current.totalConnectionsPerLevel;
     }, 0);
   
     const resData = {
       totalEarning: totalReferralEarning,
       totalWithdrawal: totalReferralEarning - currentReferralEarning,
       totalActive: totalActiveConnections,
-      totalDeactive: totalDeactiveConnections
+      totalConnections
     }
 
     await redis?.set(`userReferShortDashboard-${userId}`, JSON.stringify(resData));

@@ -66,7 +66,7 @@ export const editUser = TryCatch(async (req, res) => {
 
   return res.status(200).json({
     success: true,
-    message: "Update user",
+    message: "Changes has been done",
   });
 }); // redis done
 

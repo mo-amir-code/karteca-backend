@@ -7,7 +7,7 @@ export interface ReferralLevelType{
 
 export interface LevelEarningType{
     level:number,
-    withdrawalDisabledUsers: number,
+    totalConnectionsPerLevel: number,
     withdrawalEnabledUsers: number,
     earning: number
 }
