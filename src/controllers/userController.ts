@@ -60,6 +60,16 @@ export const fetchUserProfile = TryCatch(async (req, res, next) => {
 export const editUser = TryCatch(async (req, res) => {
   const newUserUpdate = req.body as UserEditType;
 
+  if(newUserUpdate?.email){
+    const isAlreadyExist = await User.findOne({email:newUserUpdate.email});
+    if(isAlreadyExist){
+      return res.status(409).json({
+        success: false,
+        message: "Please provide unregistered email Id"
+      });
+    }
+  }
+
   await User.findByIdAndUpdate(newUserUpdate.userId, newUserUpdate);
 
   await redis?.del(`userProfile-${newUserUpdate.userId}`);
