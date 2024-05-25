@@ -317,3 +317,12 @@ export const getAdminUpis = TryCatch(async (req, res, next) => {
         data:upis
     });
 })
+
+export const flushRedis = TryCatch(async (req, res, next) => {
+    await redis?.flushall();
+
+    return res.status(200).json({
+        success: true,
+        message: "Redis all caches flushed"
+    });
+});

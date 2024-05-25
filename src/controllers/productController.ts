@@ -8,6 +8,7 @@ import { redis } from "../utils/Redis.js";
 import {
   calculateRatingAndReviews,
   formatProductsDataForProductCard,
+  makeFirstLetterCap,
 } from "../utils/services.js";
 import { FilterProductType } from "../types/searchType.js";
 import CategoriesWithImage from "../models/CategoriesWithImage.js";
@@ -358,12 +359,14 @@ export const getCategoriesWithImage = TryCatch(async (req, res, next) => {
     });
   }
 
-  let categories = await CategoriesWithImage.find();
+  let categories = await CategoriesWithImage.find().limit(6);
   categories = categories
     .map((item: CategoryWithImageType) => {
-      return item.parent;
-    })
-    .slice(0, 6);
+      return {
+        ...item.parent,
+        name: makeFirstLetterCap(item.parent.name)
+      };
+    });
 
   await redis?.set("productCategoriesWithImage", JSON.stringify(categories));
 
@@ -373,3 +376,4 @@ export const getCategoriesWithImage = TryCatch(async (req, res, next) => {
     data: categories,
   });
 }); // redis done
+

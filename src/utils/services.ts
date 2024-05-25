@@ -216,3 +216,8 @@ export const isJwtTokenExpired = (token:string | undefined): boolean => {
 
   return false;
 }
+
+export const makeFirstLetterCap = (str:string): string => {
+  let newStr:string | string[] = str.split(" ") as string[];
+  return newStr.map((s) => s.at(0)?.toUpperCase() + s.slice(1)).join(" ") as string;
+}
