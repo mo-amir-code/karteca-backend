@@ -13,7 +13,7 @@ import ErrorHandler from "../utils/utility-class.js";
 import ReferMember from "../models/ReferMember.js";
 import { redis } from "../utils/Redis.js";
 import ReferralLevelModel from "../models/ReferralLevel.js";
-import { COOKIE_AGE_15_MIN, COOKIE_AGE_4_DAY, JWT_AGE_15_MIN, JWT_AGE_4_DAYS, JWT_ALGO } from "../utils/constants.js";
+import { COOKIE_AGE_15_MIN, COOKIE_AGE_4_DAY, JWT_AGE_15_MIN, JWT_AGE_4_DAYS } from "../utils/constants.js";
 
 export type MiddleRequestType = {
   userId: string;
@@ -151,8 +151,8 @@ export const sendOTP = TryCatch(async (req, res, next) => {
     sameSite: 'none'
   });
 
-
   await sendMail(mailOption);
+
   return res.status(200).json({
     success: true,
     message: "OTP sent successfully"
@@ -201,7 +201,7 @@ export const verify = TryCatch(async (req, res, next) => {
     }
 
 
-    const sessionToken = jwt.sign({ userId }, jwtSecretKey, { expiresIn:JWT_AGE_15_MIN } );
+    const sessionToken = jwt.sign({ userId }, jwtSecretKey, { expiresIn:JWT_AGE_4_DAYS } );
 
     res.cookie("sessiontoken", sessionToken, {
       maxAge: COOKIE_AGE_4_DAY, // 4 days
@@ -269,7 +269,7 @@ export const signin = TryCatch(async (req, res, next) => {
     let sessionToken = user.sessionToken;
 
     if(isJwtTokenExpired(sessionToken)){
-      sessionToken = jwt.sign({ userId: user._id }, jwtSecretKey, { expiresIn:JWT_AGE_15_MIN });
+      sessionToken = jwt.sign({ userId: user._id }, jwtSecretKey, { expiresIn:JWT_AGE_4_DAYS });
       user.sessionToken = sessionToken;
     }
     

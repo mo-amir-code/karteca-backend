@@ -33,7 +33,9 @@ export const getTopProducts = TryCatch(async (req, res) => {
     topProducts
   );
 
-  await redis?.set("topProducts", JSON.stringify(updatedTopProducts));
+  if(updatedTopProducts.length >= 5){ 
+    await redis?.set("topProducts", JSON.stringify(updatedTopProducts));
+  }
 
   return res.status(200).json({
     success: true,
@@ -59,7 +61,9 @@ export const getLatestProducts = TryCatch(async (req, res) => {
     .limit(5);
   latestProducts = await formatProductsDataForProductCard(latestProducts);
 
-  await redis?.set("latestProducts", JSON.stringify(latestProducts));
+  if(latestProducts.length >= 5){
+    await redis?.set("latestProducts", JSON.stringify(latestProducts));
+  }
 
   return res.status(200).json({
     success: true,
@@ -83,7 +87,9 @@ export const getComboProducts = TryCatch(async (req, res) => {
 
   comboProducts = await formatProductsDataForProductCard(comboProducts);
 
-  await redis?.set("comboProducts", JSON.stringify(comboProducts));
+  if(comboProducts.length >= 5){
+    await redis?.set("comboProducts", JSON.stringify(comboProducts));
+  }
 
   return res.status(200).json({
     success: true,

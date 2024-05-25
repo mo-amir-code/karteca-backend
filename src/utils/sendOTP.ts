@@ -20,7 +20,7 @@ export interface MailOptions {
     html: string;
 }
 
-export const sendMail = async ({ from, to, subject, html }: MailOptions): Promise<void> => {
+export const sendMail = async ({ from, to, subject, html }: MailOptions): Promise<any> => {
     try {
         let mailOptions = {
             from,
@@ -29,7 +29,7 @@ export const sendMail = async ({ from, to, subject, html }: MailOptions): Promis
             html
         };
 
-        await transporter.sendMail(mailOptions);
+        return await transporter.sendMail(mailOptions);
     } catch (error) {
         console.log(error);
     }

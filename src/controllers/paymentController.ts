@@ -55,6 +55,10 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
   if (paymentStatus === "success" && transaction) {
     const mainUserId = new Types.ObjectId(transaction.userId.toString());
 
+    if(transaction.status === "success"){
+      return next(new ErrorHandler("Payment already verified", 409));
+    }
+
     // updating user transaction from procssing to success
     transaction.status = "success";
     await transaction.save();
@@ -149,18 +153,16 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
         // }
 
         if (currentMemberLevel) {
-          console.log(currentMemberLevel)
           const userIndex = currentMemberLevel.users.findIndex(
             (u) => u.user.toString() == mainUserId.toString()
           );
           let user = currentMemberLevel.users.find(
             (u) => u.user.toString() == mainUserId.toString()
           );
-          console.log(mainUserId.toString())
-          console.log(userIndex, user)
+          
           user!.earning = earning;
           user!.isWithdrawalEnabled = true;
-          console.log(userIndex, user)
+          
           currentMemberLevel.users[userIndex] = user!;
           await currentMemberLevel.save();
         } else {
