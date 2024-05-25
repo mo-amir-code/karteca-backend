@@ -39,6 +39,10 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
   // updating user transaction
   const transaction = await Transaction.findOne({ utrId });
 
+  if(transaction?.status === "success"){
+    return next(new ErrorHandler("Payment already verified", 409));
+  }
+
   if (transaction) {
     transaction.status = paymentStatus;
     // transaction.transactionId = userTransactionId;
@@ -55,11 +59,7 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
   if (paymentStatus === "success" && transaction) {
     const mainUserId = new Types.ObjectId(transaction.userId.toString());
 
-    if(transaction.status === "success"){
-      return next(new ErrorHandler("Payment already verified", 409));
-    }
-
-    // updating user transaction from procssing to success
+   // updating user transaction from procssing to success
     transaction.status = "success";
     await transaction.save();
     // ENd with update
