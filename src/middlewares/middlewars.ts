@@ -1,23 +1,42 @@
-import User from "../models/User.js";
+// import User from "../models/User.js";
+import { redis } from "../utils/Redis.js";
 import { JWT_CURRENT_DATE } from "../utils/constants.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { TryCatch } from "./error.js";
 import jwt from "jsonwebtoken";
 
+type MiddlewareUserType = {
+  sessionToken: string,
+  role: "user" | "admin"
+}
+
 export const isValidRequest = TryCatch(async (req, res, next) => {
   const { sessiontoken } = await req.cookies;
 
-  let user;
+  let user:MiddlewareUserType | null;
 
   try {
     const data = jwt.verify(sessiontoken, process.env.JWT_SECRET_KEY!);
     const { userId, exp } = data as { userId: string; exp: number };
 
-    user = await User.findById(userId).select("sessionToken");
+    const cachedData = await redis?.get(`auth-${userId}`);
 
-    if (user.sessionToken !== sessiontoken) {
-      user.sessionToken = undefined;
-      await user.save();
+    if(cachedData){
+      user = JSON.parse(cachedData) as MiddlewareUserType | null
+    }else{
+      res.cookie("isUserLoggedIn", "", {
+        maxAge: 0, // 4 days
+        domain: process.env.ROOT_DOMAIN, // Set to the root domain
+        secure: true, // Ensure the cookie is sent only over HTTPS
+        httpOnly: true, // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
+        sameSite: "none",
+      });
+      return next(new ErrorHandler("Internal server error", 500));
+    }
+
+    if (user?.sessionToken !== sessiontoken) {
+      // user.sessionToken = undefined;
+      // await user.save();
       res.cookie("isUserLoggedIn", "", {
         maxAge: 0, // 4 days
         domain: process.env.ROOT_DOMAIN, // Set to the root domain
@@ -29,8 +48,8 @@ export const isValidRequest = TryCatch(async (req, res, next) => {
     }
 
     if (JWT_CURRENT_DATE > exp) {
-      user.sessionToken = undefined;
-      await user.save();
+      // user.sessionToken = undefined;
+      // await user.save();
       res.cookie("isUserLoggedIn", "", {
         maxAge: 0, // 4 days
         domain: process.env.ROOT_DOMAIN, // Set to the root domain
@@ -43,8 +62,8 @@ export const isValidRequest = TryCatch(async (req, res, next) => {
 
     next();
   } catch (error) {
-    user.sessionToken = undefined;
-    await user.save();
+    // user.sessionToken = undefined;
+    // await user.save();
     res.cookie("isUserLoggedIn", "", {
       maxAge: 0, // 4 days
       domain: process.env.ROOT_DOMAIN, // Set to the root domain
@@ -59,17 +78,30 @@ export const isValidRequest = TryCatch(async (req, res, next) => {
 export const isAdminValidRequest = TryCatch(async (req, res, next) => {
   const { sessiontoken } = await req.cookies;
 
-  let user;
+  let user:MiddlewareUserType | null;
 
   try {
     const data = jwt.verify(sessiontoken, process.env.JWT_SECRET_KEY!);
     const { userId, exp } = data as { userId: string; exp: number };
 
-    user = await User.findById(userId).select("sessionToken role _id");
+    const cachedData = await redis?.get(`auth-${userId}`);
 
-    if (user.sessionToken !== sessiontoken) {
-      user.sessionToken = undefined;
-      await user.save();
+    if(cachedData){
+      user = JSON.parse(cachedData) as MiddlewareUserType | null
+    }else{
+      res.cookie("isUserLoggedIn", "", {
+        maxAge: 0, // 4 days
+        domain: process.env.ROOT_DOMAIN, // Set to the root domain
+        secure: true, // Ensure the cookie is sent only over HTTPS
+        httpOnly: true, // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
+        sameSite: "none",
+      });
+      return next(new ErrorHandler("Internal server error", 500));
+    }
+
+    if (user?.sessionToken !== sessiontoken) {
+      // user.sessionToken = undefined;
+      // await user.save();
       res.cookie("isUserLoggedIn", "", {
         maxAge: 0, // 4 days
         domain: process.env.ROOT_DOMAIN, // Set to the root domain
@@ -81,8 +113,8 @@ export const isAdminValidRequest = TryCatch(async (req, res, next) => {
     }
 
     if (JWT_CURRENT_DATE > exp) {
-      user.sessionToken = undefined;
-      await user.save();
+      // user.sessionToken = undefined;
+      // await user.save();
       res.cookie("isUserLoggedIn", "", {
         maxAge: 0, // 4 days
         domain: process.env.ROOT_DOMAIN, // Set to the root domain
@@ -93,16 +125,15 @@ export const isAdminValidRequest = TryCatch(async (req, res, next) => {
       return next(new ErrorHandler("Your session token has been expired", 401));
     }
 
-    if(user.role !== "admin"){
+    if(user?.role !== "admin"){
       return next(new ErrorHandler("You have not admin permission", 403));
     }
 
-    req.body.adminId = user._id
-
+    req.body.adminId = userId
     next();
   } catch (error) {
-    user.sessionToken = undefined;
-    await user.save();
+      // user?.sessionToken = undefined;
+      // await user.save();
     res.cookie("isUserLoggedIn", "", {
       maxAge: 0, // 4 days
       domain: process.env.ROOT_DOMAIN, // Set to the root domain

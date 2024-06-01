@@ -218,6 +218,12 @@ export const verify = TryCatch(async (req, res, next) => {
     user.sessionToken = sessionToken;
     await user.save();
 
+    const cachingData = {
+      sessionToken,
+      role: user.role
+    }
+    await redis?.set(`auth-${user._id}`, JSON.stringify(cachingData));
+
     return res.status(200).json({
       success: true,
       message: "Account verified successfully.",
@@ -285,6 +291,11 @@ export const signin = TryCatch(async (req, res, next) => {
     
 
     // res.setHeader("Set-Cookie", `sessiontoken=${sessionToken}; Max-Age:345600`)
+    const cachingData = {
+      sessionToken,
+      role: user.role
+    }
+    await redis?.set(`auth-${user._id}`, JSON.stringify(cachingData));
 
     return res.status(200).json({
       success: true,
