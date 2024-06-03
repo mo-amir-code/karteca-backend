@@ -11,9 +11,10 @@ import { AuthSignupUserType } from "../types/user.js";
 import { TryCatch } from "../middlewares/error.js";
 import ErrorHandler from "../utils/utility-class.js";
 import ReferMember from "../models/ReferMember.js";
-import { redis } from "../utils/Redis.js";
+import { redis } from "../utils/redis/Redis.js";
 import ReferralLevelModel from "../models/ReferralLevel.js";
 import { COOKIE_AGE_15_MIN, COOKIE_AGE_4_DAY, JWT_AGE_15_MIN, JWT_AGE_4_DAYS } from "../utils/constants.js";
+import { getAuthUserKey, getUserReferDashboardKey, getUserReferShortDashboardKey } from "../utils/redis/redisKeys.js";
 
 export type MiddleRequestType = {
   userId: string;
@@ -81,8 +82,8 @@ export const signup = TryCatch(async (req, res, next) => {
       } 
       else await ReferralLevelModel.create({ level: level, userId: referredMember.userId, users: [{ user: new_user._id, earning: 0, isWithdrawalEnabled: false }] });
 
-      await redis?.del(`userReferShortDashboard-${referredMember.userId}`);
-      await redis?.del(`userReferDashboard-${referredMember.userId}`);
+      await redis?.del(getUserReferShortDashboardKey(referredMember.userId));
+      await redis?.del(getUserReferDashboardKey(referredMember.userId));
 
       referredMember = (await ReferMember.findOne({ referCode: referredMember.referredUserReferCode })) || undefined;
       level += 1;
@@ -222,7 +223,7 @@ export const verify = TryCatch(async (req, res, next) => {
       sessionToken,
       role: user.role
     }
-    await redis?.set(`auth-${user._id}`, JSON.stringify(cachingData));
+    await redis?.set(getAuthUserKey(user._id), JSON.stringify(cachingData));
 
     return res.status(200).json({
       success: true,
@@ -295,7 +296,7 @@ export const signin = TryCatch(async (req, res, next) => {
       sessionToken,
       role: user.role
     }
-    await redis?.set(`auth-${user._id}`, JSON.stringify(cachingData));
+    await redis?.set(getAuthUserKey(user._id), JSON.stringify(cachingData));
 
     return res.status(200).json({
       success: true,

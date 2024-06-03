@@ -1,10 +1,11 @@
 import { TryCatch } from "../middlewares/error.js";
 import Banner from "../models/Banner.js"
-import { redis } from "../utils/Redis.js";
+import { redis } from "../utils/redis/Redis.js";
+import { homeSliderBannerKey, singleBannerKey } from "../utils/redis/redisKeys.js";
 
 export const getHomeSliderBanners = TryCatch(async (req, res, next) => {
 
-    const catchedBanners = await redis?.get("home-slider-banners");
+    const catchedBanners = await redis?.get(homeSliderBannerKey);
 
     if(catchedBanners){
         return res.status(200).json({
@@ -26,7 +27,7 @@ export const getHomeSliderBanners = TryCatch(async (req, res, next) => {
         banners = await Banner.find({"compaigner.type": "admin"}).limit(6);
     }
 
-    await redis?.set("home-slider-banners", JSON.stringify(banners));
+    await redis?.set(homeSliderBannerKey, JSON.stringify(banners));
 
     return res.status(200).json({
         success: true,
@@ -37,7 +38,7 @@ export const getHomeSliderBanners = TryCatch(async (req, res, next) => {
 
 export const getSingleBanner = TryCatch(async (req, res, next) => {
 
-    const catchedBanners = await redis?.get("single-banner");
+    const catchedBanners = await redis?.get(singleBannerKey);
 
     if(catchedBanners){
         return res.status(200).json({
@@ -50,7 +51,7 @@ export const getSingleBanner = TryCatch(async (req, res, next) => {
     
     const banner = await Banner.find({"compaigner.type": "admin"}).limit(1);
 
-    await redis?.set("single-banner", JSON.stringify(banner[0]));
+    await redis?.set(singleBannerKey, JSON.stringify(banner[0]));
 
     return res.status(200).json({
         success: true,

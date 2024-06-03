@@ -3,7 +3,8 @@ import Cart from "../models/Cart.js";
 import ReferMember from "../models/ReferMember.js";
 import User from "../models/User.js";
 import { APICartType } from "../types/cart.js";
-import { redis } from "../utils/Redis.js";
+import { redis } from "../utils/redis/Redis.js";
+import { getUserCartCountKey, getUserCartItemKey, getUserCheckoutWalletsKey } from "../utils/redis/redisKeys.js";
 import ErrorHandler from "../utils/utility-class.js";
 
 export const getCartItemsByUserId = TryCatch(async (req, res, next) => {
@@ -13,7 +14,7 @@ export const getCartItemsByUserId = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("UserId is not found.", 400));
   }
 
-  const catchedItems = await redis?.get(`userCartItem-${userId}`);
+  const catchedItems = await redis?.get(getUserCartItemKey(userId));
 
   if(catchedItems){
     return res.status(200).json({
@@ -40,7 +41,7 @@ export const getCartItemsByUserId = TryCatch(async (req, res, next) => {
     }
   });
 
-  await redis?.set(`userCartItem-${userId}`, JSON.stringify(carts));
+  await redis?.set(getUserCartItemKey(userId), JSON.stringify(carts));
 
   return res.status(200).json({
     success: true,
@@ -55,7 +56,7 @@ export const getCartCountByUserId = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("UserId is not found.", 400));
   }
 
-  const catchedCartCounts = await redis?.get(`userCartCounts-${userId}`);
+  const catchedCartCounts = await redis?.get(getUserCartCountKey(userId));
 
   if(catchedCartCounts){
     return res.status(200).json({
@@ -68,7 +69,7 @@ export const getCartCountByUserId = TryCatch(async (req, res, next) => {
   const cartsId = await Cart.find({ userId }).select("product");
   const totalItems = cartsId.map((it) => it.product);
 
-  await redis?.set(`userCartCounts-${userId}`, JSON.stringify(totalItems));
+  await redis?.set(getUserCartCountKey(userId), JSON.stringify(totalItems));
 
   return res.status(200).json({
     success: true,
@@ -84,7 +85,7 @@ export const getWallets = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("UserId is not found.", 400));
   }
 
-  const catchedCheckoutWallets = await redis?.get(`userCheckoutWallets-${userId}`);
+  const catchedCheckoutWallets = await redis?.get(getUserCheckoutWalletsKey(userId));
 
   if(catchedCheckoutWallets){
     return res.status(200).json({
@@ -103,7 +104,7 @@ export const getWallets = TryCatch(async (req, res, next) => {
     currentReferralEarning: userReferMember.currentReferralEarning
   }
 
-  await redis?.set(`userCheckoutWallets-${userId}`, JSON.stringify(data));
+  await redis?.set(getUserCheckoutWalletsKey(userId), JSON.stringify(data));
 
   return res.status(200).json({
     success: true,
@@ -127,8 +128,8 @@ export const createCart = TryCatch(async (req, res, next) => {
   }
 
   await Cart.create(req.body);
-  await redis?.del(`userCartItem-${userId}`);
-  await redis?.del(`userCartCounts-${userId}`);
+  await redis?.del(getUserCartItemKey(userId.toString()));
+  await redis?.del(getUserCartCountKey(userId.toString()));
 
   return res.status(200).json({
     success: true,
@@ -144,8 +145,8 @@ export const deleteCart = TryCatch(async (req, res, next) => {
     }
 
     const cart = await Cart.findByIdAndDelete(cartId);
-    await redis?.del(`userCartItem-${cart.userId}`);
-    await redis?.del(`userCartCounts-${cart.userId}`);
+    await redis?.del(getUserCartItemKey(cart.userId));
+    await redis?.del(getUserCartCountKey(cart.userId));
 
     return res.status(200).json({
       success: true,
@@ -161,7 +162,7 @@ export const updateCart = TryCatch(async (req, res, next) => {
         }
 
         const cart = await Cart.findByIdAndUpdate(cartId, req.body);
-        await redis?.del(`userCartItem-${cart.userId}`);
+        await redis?.del(getUserCartItemKey(cart.userId));
 
         return res.status(200).json({
             success: true,

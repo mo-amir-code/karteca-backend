@@ -24,8 +24,9 @@ import {
   UpdateUserPasswordType,
   UserEditType,
 } from "../types/user.js";
-import { redis } from "../utils/Redis.js";
+import { redis } from "../utils/redis/Redis.js";
 import bcrypt from "bcrypt";
+import { getProductDetailsKey, getProductRatingKey, getUserAddressesKey, getUserNotReadNotificationCountKey, getUserNotificationKey, getUserProfileKey, getUserWishlistKey } from "../utils/redis/redisKeys.js";
 
 export const fetchUserProfile = TryCatch(async (req, res, next) => {
   const { userId } = req.params;
@@ -34,7 +35,7 @@ export const fetchUserProfile = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("Something is missing here", 400));
   }
 
-  const catchedUserProfile = await redis?.get(`userProfile-${userId}`);
+  const catchedUserProfile = await redis?.get(getUserProfileKey(userId));
 
   if (catchedUserProfile) {
     return res.status(200).json({
@@ -48,7 +49,7 @@ export const fetchUserProfile = TryCatch(async (req, res, next) => {
     "_id name gender email phone"
   );
 
-  await redis?.set(`userProfile-${userId}`, JSON.stringify(user));
+  await redis?.set(getUserProfileKey(userId), JSON.stringify(user));
 
   return res.status(200).json({
     success: true,
@@ -72,7 +73,7 @@ export const editUser = TryCatch(async (req, res) => {
 
   await User.findByIdAndUpdate(newUserUpdate.userId, newUserUpdate);
 
-  await redis?.del(`userProfile-${newUserUpdate.userId}`);
+  await redis?.del(getUserProfileKey(newUserUpdate.userId));
 
   return res.status(200).json({
     success: true,
@@ -87,7 +88,7 @@ export const fetchUserAddresses = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("Something is missing here.", 400));
   }
 
-  const catchedAddresses = await redis?.get(`userAddresses-${userId}`);
+  const catchedAddresses = await redis?.get(getUserAddressesKey(userId));
 
   if (catchedAddresses) {
     return res.status(200).json({
@@ -99,7 +100,7 @@ export const fetchUserAddresses = TryCatch(async (req, res, next) => {
 
   const addresses = await DeliveryAddress.find({ userId });
 
-  await redis?.set(`userAddresses-${userId}`, JSON.stringify(addresses));
+  await redis?.set(getUserAddressesKey(userId), JSON.stringify(addresses));
 
   return res.status(200).json({
     success: true,
@@ -150,7 +151,7 @@ export const addUserAddress = TryCatch(async (req, res, next) => {
     type: address.type.toLowerCase(),
   });
 
-  await redis?.del(`userAddresses-${address.userId}`);
+  await redis?.del(getUserAddressesKey(address.userId));
 
   return res.status(200).json({
     success: true,
@@ -167,7 +168,7 @@ export const deleteUserAddress = TryCatch(async (req, res, next) => {
 
   const deletedAddress = await DeliveryAddress.findByIdAndDelete(addressId);
 
-  await redis?.del(`userAddresses-${deletedAddress.userId}`);
+  await redis?.del(getUserAddressesKey(deletedAddress.userId));
 
   return res.status(200).json({
     success: true,
@@ -184,7 +185,7 @@ export const updateUserAddress = TryCatch(async (req, res, next) => {
 
   await DeliveryAddress.findByIdAndUpdate(address._id, address, { new: true });
 
-  await redis?.del(`userAddresses-${address.userId}`);
+  await redis?.del(getUserAddressesKey(address.userId));
 
   return res.status(200).json({
     success: true,
@@ -199,7 +200,7 @@ export const fetchUserWishlist = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("Something is missing here.", 400));
   }
 
-  const catchedWishlist = await redis?.get(`userWishlist-${userId}`);
+  const catchedWishlist = await redis?.get(getUserWishlistKey(userId));
 
   if(catchedWishlist){
     return res.status(200).json({
@@ -218,7 +219,7 @@ export const fetchUserWishlist = TryCatch(async (req, res, next) => {
     (wishlist?.products || []).map(async (item) => {
       const newItem = JSON.parse(JSON.stringify(item));
 
-      const product = await redis?.get(`product-details-${newItem._id}`);
+      const product = await redis?.get(getProductDetailsKey(newItem._id));
 
       if (product) {
         const data = JSON.parse(product);
@@ -241,7 +242,7 @@ export const fetchUserWishlist = TryCatch(async (req, res, next) => {
 
       let ratingAndReviews;
 
-      const catchedRating = await redis?.get(`product-rating-${newItem._id}`);
+      const catchedRating = await redis?.get(getProductRatingKey(newItem._id));
 
       if (!catchedRating) {
         const ratingAndReviewsData = await RatingAndReviews.find({
@@ -263,7 +264,7 @@ export const fetchUserWishlist = TryCatch(async (req, res, next) => {
     })
   );
 
-  await redis?.set(`userWishlist-${userId}`, JSON.stringify(products));
+  await redis?.set(getUserWishlistKey(userId), JSON.stringify(products));
 
   return res.status(200).json({
     success: true,
@@ -290,7 +291,7 @@ export const createUserWishlistItems = TryCatch(async (req, res, next) => {
     wishlistItems = await Wishlist.create({ userId, products: [productId] });
   }
 
-  await redis?.del(`userWishlist-${userId}`);
+  await redis?.del(getUserWishlistKey(userId));
 
   return res.status(200).json({
     success: true,
@@ -321,7 +322,7 @@ export const deleteUserWishlistItems = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("Something is missing here.", 400));
   }
 
-  await redis?.del(`userWishlist-${userId}`);
+  await redis?.del(getUserWishlistKey(userId));
 
   await Wishlist.findOneAndUpdate(
     { userId },
@@ -342,7 +343,7 @@ export const addUserWishlist = TryCatch(async (req, res, next) => {
   }
 
   await Wishlist.findOneAndUpdate({ userId }, { $push: { products: product } });
-  await redis?.del(`userWishlist-${userId}`);
+  await redis?.del(getUserWishlistKey(userId));
 
   return res.status(200).json({
     success: true,
@@ -581,8 +582,13 @@ export const updateUserPassword = TryCatch(async (req, res, next) => {
     type: "other",
     userId,
   };
-  await Notification.create(ntfData);
-  await redis?.del(`userNotifications-${userId}`);
+
+  const newNotification = await Notification.create(ntfData);
+
+  await redis?.rpush(getUserNotificationKey(userId), JSON.stringify(newNotification));
+  await redis?.incr(getUserNotReadNotificationCountKey(userId));
+
+  // await redis?.del(getUserNotificationKey(userId));
 
   return res.status(200).json({
     success: true,

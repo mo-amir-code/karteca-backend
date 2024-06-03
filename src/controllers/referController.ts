@@ -6,7 +6,8 @@ import Transaction from "../models/Transaction.js";
 import User from "../models/User.js";
 import { LevelEarningType } from "../types/refer.js";
 import { CTransactionType } from "../types/user.js";
-import { redis } from "../utils/Redis.js";
+import { redis } from "../utils/redis/Redis.js";
+import { getUserReferDashboardKey, getUserReferShortDashboardKey } from "../utils/redis/redisKeys.js";
 import ErrorHandler from "../utils/utility-class.js";
 
 
@@ -34,7 +35,7 @@ export const fetchUserDashboard = TryCatch(async (req, res, next) => {
       return next(new ErrorHandler("Something is missing", 400));
     }
 
-    const catchedUserDashboard = await redis?.get(`userReferDashboard-${userId}`);
+    const catchedUserDashboard = await redis?.get(getUserReferDashboardKey(userId));
 
     if(catchedUserDashboard){
       return res.status(200).json({
@@ -102,7 +103,7 @@ export const fetchUserDashboard = TryCatch(async (req, res, next) => {
       withdrawalHistory: withdrawalHistory.reverse()
     }
 
-    await redis?.set(`userReferDashboard-${userId}`, JSON.stringify(resData));
+    await redis?.set(getUserReferDashboardKey(userId), JSON.stringify(resData));
     
     return res.status(200).json({
       success: true,
@@ -119,7 +120,7 @@ export const fetchUserShortDashboard = TryCatch(async (req, res, next) => {
       return next(new ErrorHandler("Something is missing", 400));
     }
 
-    const catchedUserDashboard = await redis?.get(`userReferShortDashboard-${userId}`);
+    const catchedUserDashboard = await redis?.get(getUserReferShortDashboardKey(userId));
 
     if(catchedUserDashboard){
       return res.status(200).json({
@@ -187,7 +188,7 @@ export const fetchUserShortDashboard = TryCatch(async (req, res, next) => {
       totalConnections
     }
 
-    await redis?.set(`userReferShortDashboard-${userId}`, JSON.stringify(resData));
+    await redis?.set(getUserReferShortDashboardKey(userId), JSON.stringify(resData));
     
     return res.status(200).json({
       success: true,

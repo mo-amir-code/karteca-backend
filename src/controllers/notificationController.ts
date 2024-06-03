@@ -1,62 +1,88 @@
 import { TryCatch } from "../middlewares/error.js";
 import Notification from "../models/Notification.js";
-import { redis } from "../utils/Redis.js";
+import { redis } from "../utils/redis/Redis.js";
+import {
+  getUserNotReadNotificationCountKey,
+  getUserNotificationKey,
+} from "../utils/redis/redisKeys.js";
 import ErrorHandler from "../utils/utility-class.js";
 
-
 export const getUserNotifications = TryCatch(async (req, res, next) => {
-    const {userId} = req.params;
+  const { userId } = req.params;
 
-    if(!userId){
-        return next(new ErrorHandler("User ID not found", 400));
-    }
+  if (!userId) {
+    return next(new ErrorHandler("User ID not found", 400));
+  }
 
-    let catchedNtf = await redis?.get(`userNotifications-${userId}`);
+  const ntfKey = getUserNotificationKey(userId);
 
-    if(catchedNtf){
-        return res.status(200).json({
-            success: true,
-            message: "Notifications fetched",
-            data: JSON.parse(catchedNtf)
-        })
-    }
+  let catchedNtf = await redis?.lrange(ntfKey, 0, -1);
+  catchedNtf = catchedNtf?.map((item) => JSON.parse(item));
 
-    const ntf = await Notification.find({userId}).select("-userId");
-    let nt = ntf.reduce((total, current) => {
-        if(!current.isRead) return total + 1;
-        else return total;
-    }, 0);
+  let catchedNtfCount = await redis?.get(
+    getUserNotReadNotificationCountKey(userId)
+  );
 
-    const data = {
-        notifications: ntf.reverse(),
-        notificationCount: nt
-    }
-
-    await redis?.set(`userNotifications-${userId}`, JSON.stringify(data))
-
+  if (catchedNtf && catchedNtfCount) {
     return res.status(200).json({
-        success: true,
-        message: "Notifications fetched",
-        data
-    })
+      success: true,
+      message: "Notifications fetched",
+      data: {
+        notifications: catchedNtf,
+        notificationCount: catchedNtfCount,
+      },
+    });
+  }
+
+  const ntf = await Notification.find({ userId }).select("-userId");
+  let nt = ntf.reduce((total, current) => {
+    if (!current.isRead) return total + 1;
+    else return total;
+  }, 0);
+
+  const data = {
+    notifications: ntf.reverse(),
+    notificationCount: nt,
+  };
+
+  await redis?.set(getUserNotReadNotificationCountKey(userId),nt);
+  
+  ntf.reverse().forEach(async (item) => {
+    await redis?.rpush(ntfKey, JSON.stringify(item));
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Notifications fetched",
+    data,
+  });
 });
 
 export const readUserNotifications = TryCatch(async (req, res, next) => {
-    const {userId} = req.params;
+  const { userId } = req.params;
 
-    if(!userId){
-        return next(new ErrorHandler("User ID not found", 400));
-    }
+  if (!userId) {
+    return next(new ErrorHandler("User ID not found", 400));
+  }
 
-    await Notification.updateMany(
-        { userId: userId, isRead: false },
-        { $set: { isRead: true } }
-    );
-    
-    await redis?.del(`userNotifications-${userId}`);
+  await Notification.updateMany(
+    { userId: userId, isRead: false },
+    { $set: { isRead: true } },
+    { new: true }
+  );
 
-    return res.status(200).json({
-        success: true,
-        message: "Notifications read",
-    })
+  const ntfs = await Notification.find({ userId }).select("-userId");
+
+  const ntfKey = getUserNotificationKey(userId);
+  await redis?.del(ntfKey);
+
+  ntfs.reverse().forEach( async (item) => {
+    await redis?.rpush(ntfKey, JSON.stringify(item));
+  });
+  await redis?.set(getUserNotReadNotificationCountKey(userId), 0);
+
+  return res.status(200).json({
+    success: true,
+    message: "Notifications read",
+  });
 });

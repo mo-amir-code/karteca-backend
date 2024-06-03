@@ -1,5 +1,5 @@
 import {Redis} from "ioredis";
-import { TryCatch } from "../middlewares/error.js";
+import { TryCatch } from "../../middlewares/error.js";
 import { Response } from "express";
 
 

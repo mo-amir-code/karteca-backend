@@ -2,11 +2,12 @@ import bcrypt from "bcrypt";
 import { AuthSignupUserType } from "../types/user.js";
 import crypto from "crypto";
 import Cart from "../models/Cart.js";
-import { redis } from "./Redis.js";
+import { redis } from "./redis/Redis.js";
 import RatingAndReviews from "../models/RatingAndReviews.js";
 import { ProductCardReturnType, ProductCardType } from "../types/product.js";
 import jwt from "jsonwebtoken"
 import { JWT_CURRENT_DATE } from "./constants.js";
+import { getProductDetailsKey, getUserCartCountKey, getUserCartItemKey, getUserCheckoutWalletsKey, getUserOrdersKey } from "./redis/redisKeys.js";
 
 export const checkSignupItemsAndMakeStructured = async (
   body: AuthSignupUserType | null
@@ -132,12 +133,12 @@ export const clearCreateOrderCachedRedis = async ({
   userId: string;
 }) => {
   await Cart.deleteMany({ userId: userId });
-  await redis?.del(`userOrders-${userId}`);
-  await redis?.del(`userCartCounts-${userId}`);
-  await redis?.del(`userCartItem-${userId}`);
-  await redis?.del(`userCheckoutWallets-${userId}`);
+  await redis?.del(getUserOrdersKey(userId));
+  await redis?.del(getUserCartCountKey(userId));
+  await redis?.del(getUserCartItemKey(userId));
+  await redis?.del(getUserCheckoutWalletsKey(userId));
   await redis?.del(`userTransactions-${userId}`);
-  await redis?.del(`userCheckoutWallets-${userId}`);
+  await redis?.del(getUserCheckoutWalletsKey(userId));
 };
 
 export const returnWalletAmount = ({name, amount, totalAmount}:{name?:string | undefined, amount?:number | undefined, totalAmount:number}):number => {
@@ -167,7 +168,7 @@ export const formatProductsDataForProductCard = async (products:ProductCardType[
   return await Promise.all(
     products.map(async (item) => {
 
-      const cachedProduct = await redis?.get(`product-details-${item._id}`);
+      const cachedProduct = await redis?.get(getProductDetailsKey(item._id));
 
       if (cachedProduct) {
         const data = JSON.parse(cachedProduct);

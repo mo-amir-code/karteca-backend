@@ -4,11 +4,12 @@ import { CPaymentOrderType, CTransactionType } from "../types/user.js";
 import ErrorHandler from "../utils/utility-class.js";
 import Transaction from "../models/Transaction.js";
 import User from "../models/User.js";
-import { redis } from "../utils/Redis.js";
+import { redis } from "../utils/redis/Redis.js";
 // import Cart from "../models/Cart.js";
 import { makePayment } from "../middlewares/payment.js";
 import ReferMember from "../models/ReferMember.js";
 import { clearCreateOrderCachedRedis, returnWalletAmount } from "../utils/services.js";
+import { getUserOrderDetailsKey, getUserOrdersKey, getUserReferDashboardKey, getUserReferShortDashboardKey } from "../utils/redis/redisKeys.js";
 
 export const fetchUserOrder = TryCatch(async (req, res, next) => {
   const { userId } = req.params;
@@ -17,7 +18,7 @@ export const fetchUserOrder = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("Something is missing here.", 400));
   }
 
-  const catchedOrders = await redis?.get(`userOrders-${userId}`);
+  const catchedOrders = await redis?.get(getUserOrdersKey(userId));
 
   if(catchedOrders){
     return res.status(200).json({
@@ -43,7 +44,7 @@ export const fetchUserOrder = TryCatch(async (req, res, next) => {
     }
   });
 
-  await redis?.set(`userOrders-${userId}`, JSON.stringify(orders));
+  await redis?.set(getUserOrdersKey(userId), JSON.stringify(orders));
 
   return res.status(200).json({
     success: true,
@@ -59,7 +60,7 @@ export const fetchUserOrderById = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("Something is missing", 400));
   }
 
-  const cachedOrderDetails = await redis?.get(`userOrderDetails-${orderId}`);
+  const cachedOrderDetails = await redis?.get(getUserOrderDetailsKey(orderId));
 
   if(cachedOrderDetails){
     return res.status(200).json({
@@ -94,7 +95,7 @@ export const fetchUserOrderById = TryCatch(async (req, res, next) => {
     }
   }
 
-  await redis?.set(`userOrderDetails-${orderId}`, JSON.stringify(order));
+  await redis?.set(getUserOrderDetailsKey(orderId), JSON.stringify(order));
 
   return res.status(200).json({
     success: true,
@@ -184,8 +185,8 @@ export const createOrders = TryCatch(async (req, res, next) => {
         await user.save();
         break;
       case "currentReferralEarning":
-        await redis?.del(`userReferDashboard-${userId}`);
-        await redis?.del(`userReferShortDashboard-${userId}`);
+        await redis?.del(getUserReferDashboardKey(userId));
+        await redis?.del(getUserReferShortDashboardKey(userId));
         const referMember = await ReferMember.findOne({
           userId: userId,
         });

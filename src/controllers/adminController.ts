@@ -6,7 +6,8 @@ import TxnVerifyRequest from "../models/TxnVerifyRequest.js";
 import User from "../models/User.js";
 import WithdrawalRequest from "../models/WithdrawalRequest.js";
 import { ChildCategoryType, ChildCreateCategoryType, CreateCategoryType, CreateProductType, ObjectType } from "../types/admin.js";
-import { redis } from "../utils/Redis.js";
+import { redis } from "../utils/redis/Redis.js";
+import { productCategoriesWithImageKey } from "../utils/redis/redisKeys.js";
 import { deleteImageOnCloudinary, uploadImageOnCloudinary } from "../utils/uploadOnCloudinary.js";
 import ErrorHandler from "../utils/utility-class.js";
 
@@ -188,7 +189,7 @@ export const createCategory = TryCatch(async (req, res, next) => {
         }
     });
     
-    await redis?.del("productCategoriesWithImage");
+    await redis?.del(productCategoriesWithImageKey);
 
     return res.status(200).json({
         success: true,
@@ -228,7 +229,7 @@ export const createChildCategory = TryCatch(async (req, res, next) => {
     });
     await category.save();
 
-    await redis?.del("productCategoriesWithImage");
+    await redis?.del(productCategoriesWithImageKey);
 
     return res.status(200).json({
         success: true,

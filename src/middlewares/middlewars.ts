@@ -1,9 +1,10 @@
 // import User from "../models/User.js";
-import { redis } from "../utils/Redis.js";
+import { redis } from "../utils/redis/Redis.js";
 import { JWT_CURRENT_DATE } from "../utils/constants.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { TryCatch } from "./error.js";
 import jwt from "jsonwebtoken";
+import { getAuthUserKey } from "../utils/redis/redisKeys.js";
 
 type MiddlewareUserType = {
   sessionToken: string,
@@ -19,7 +20,7 @@ export const isValidRequest = TryCatch(async (req, res, next) => {
     const data = jwt.verify(sessiontoken, process.env.JWT_SECRET_KEY!);
     const { userId, exp } = data as { userId: string; exp: number };
 
-    const cachedData = await redis?.get(`auth-${userId}`);
+    const cachedData = await redis?.get(getAuthUserKey(userId));
 
     if(cachedData){
       user = JSON.parse(cachedData) as MiddlewareUserType | null
@@ -84,7 +85,7 @@ export const isAdminValidRequest = TryCatch(async (req, res, next) => {
     const data = jwt.verify(sessiontoken, process.env.JWT_SECRET_KEY!);
     const { userId, exp } = data as { userId: string; exp: number };
 
-    const cachedData = await redis?.get(`auth-${userId}`);
+    const cachedData = await redis?.get(getAuthUserKey(userId));
 
     if(cachedData){
       user = JSON.parse(cachedData) as MiddlewareUserType | null
