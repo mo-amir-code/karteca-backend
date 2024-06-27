@@ -1,6 +1,6 @@
 // import User from "../models/User.js";
 import { redis } from "../utils/redis/Redis.js";
-import { JWT_CURRENT_DATE } from "../utils/constants.js";
+import { JWT_CURRENT_DATE, JWT_SECRET_KEY, ROOT_DOMAIN } from "../utils/constants.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { TryCatch } from "./error.js";
 import jwt from "jsonwebtoken";
@@ -17,7 +17,7 @@ export const isValidRequest = TryCatch(async (req, res, next) => {
   let user:MiddlewareUserType | null;
 
   try {
-    const data = jwt.verify(sessiontoken, process.env.JWT_SECRET_KEY!);
+    const data = jwt.verify(sessiontoken, JWT_SECRET_KEY!);
     const { userId, exp } = data as { userId: string; exp: number };
 
     const cachedData = await redis?.get(getAuthUserKey(userId));
@@ -27,7 +27,7 @@ export const isValidRequest = TryCatch(async (req, res, next) => {
     }else{
       res.cookie("isUserLoggedIn", "", {
         maxAge: 0, // 4 days
-        domain: process.env.ROOT_DOMAIN, // Set to the root domain
+        domain: ROOT_DOMAIN, // Set to the root domain
         secure: true, // Ensure the cookie is sent only over HTTPS
         httpOnly: true, // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
         sameSite: "none",
@@ -40,7 +40,7 @@ export const isValidRequest = TryCatch(async (req, res, next) => {
       // await user.save();
       res.cookie("isUserLoggedIn", "", {
         maxAge: 0, // 4 days
-        domain: process.env.ROOT_DOMAIN, // Set to the root domain
+        domain: ROOT_DOMAIN, // Set to the root domain
         secure: true, // Ensure the cookie is sent only over HTTPS
         httpOnly: true, // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
         sameSite: "none",
@@ -53,7 +53,7 @@ export const isValidRequest = TryCatch(async (req, res, next) => {
       // await user.save();
       res.cookie("isUserLoggedIn", "", {
         maxAge: 0, // 4 days
-        domain: process.env.ROOT_DOMAIN, // Set to the root domain
+        domain: ROOT_DOMAIN, // Set to the root domain
         secure: true, // Ensure the cookie is sent only over HTTPS
         httpOnly: true, // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
         sameSite: "none",
@@ -67,7 +67,7 @@ export const isValidRequest = TryCatch(async (req, res, next) => {
     // await user.save();
     res.cookie("isUserLoggedIn", "", {
       maxAge: 0, // 4 days
-      domain: process.env.ROOT_DOMAIN, // Set to the root domain
+      domain: ROOT_DOMAIN, // Set to the root domain
       secure: true, // Ensure the cookie is sent only over HTTPS
       httpOnly: true, // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
       sameSite: "none",
@@ -82,7 +82,7 @@ export const isAdminValidRequest = TryCatch(async (req, res, next) => {
   let user:MiddlewareUserType | null;
 
   try {
-    const data = jwt.verify(sessiontoken, process.env.JWT_SECRET_KEY!);
+    const data = jwt.verify(sessiontoken, JWT_SECRET_KEY!);
     const { userId, exp } = data as { userId: string; exp: number };
 
     const cachedData = await redis?.get(getAuthUserKey(userId));
@@ -92,7 +92,7 @@ export const isAdminValidRequest = TryCatch(async (req, res, next) => {
     }else{
       res.cookie("isUserLoggedIn", "", {
         maxAge: 0, // 4 days
-        domain: process.env.ROOT_DOMAIN, // Set to the root domain
+        domain: ROOT_DOMAIN, // Set to the root domain
         secure: true, // Ensure the cookie is sent only over HTTPS
         httpOnly: true, // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
         sameSite: "none",
@@ -105,7 +105,7 @@ export const isAdminValidRequest = TryCatch(async (req, res, next) => {
       // await user.save();
       res.cookie("isUserLoggedIn", "", {
         maxAge: 0, // 4 days
-        domain: process.env.ROOT_DOMAIN, // Set to the root domain
+        domain: ROOT_DOMAIN, // Set to the root domain
         secure: true, // Ensure the cookie is sent only over HTTPS
         httpOnly: true, // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
         sameSite: "none",
@@ -118,7 +118,7 @@ export const isAdminValidRequest = TryCatch(async (req, res, next) => {
       // await user.save();
       res.cookie("isUserLoggedIn", "", {
         maxAge: 0, // 4 days
-        domain: process.env.ROOT_DOMAIN, // Set to the root domain
+        domain: ROOT_DOMAIN, // Set to the root domain
         secure: true, // Ensure the cookie is sent only over HTTPS
         httpOnly: true, // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
         sameSite: "none",
@@ -137,7 +137,7 @@ export const isAdminValidRequest = TryCatch(async (req, res, next) => {
       // await user.save();
     res.cookie("isUserLoggedIn", "", {
       maxAge: 0, // 4 days
-      domain: process.env.ROOT_DOMAIN, // Set to the root domain
+      domain: ROOT_DOMAIN, // Set to the root domain
       secure: true, // Ensure the cookie is sent only over HTTPS
       httpOnly: true, // Makes the cookie accessible only via HTTP(S) requests, not JavaScript
       sameSite: "none",

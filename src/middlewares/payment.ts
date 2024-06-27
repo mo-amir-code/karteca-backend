@@ -1,5 +1,6 @@
 import QRCode from "qrcode"
 import Admin from "../models/Admin.js";
+import { ADMIN_UPI } from "../utils/constants.js";
 
 // export const makePayment = async ({ totalAmount, transactionId, name, email, phone}:{totalAmount:number, transactionId:string, name:string, email: string, phone: number}) => {
 //     const paymentOrder = await razorpayInstance.orders.create({
@@ -28,7 +29,7 @@ import Admin from "../models/Admin.js";
 
 export const makePayment = async ({ totalAmount, email}:{totalAmount:number, email: string}) => {
   const admin = await Admin.findOne({ "upi.isActive": true });
-  const link = `upi://pay?pa=${admin?.upi?.upiId || process.env.ADMIN_UPI}&am=${totalAmount}&tn=${email}`
+  const link = `upi://pay?pa=${admin?.upi?.upiId || ADMIN_UPI}&am=${totalAmount}&tn=${email}`
   const qrcode = await QRCode.toDataURL(link);
   return qrcode;
 }

@@ -7,10 +7,11 @@ import helment from "helmet";
 import morgan from "morgan";
 import cors from "cors"
 import { createCategoriesWithImage, createProducts } from "./utils/createProducts.js";
+import { CLIENT_ORIGIN, CLIENT_ORIGIN2, PORT } from "./utils/constants.js";
 
 const app: Express = express();
 
-const whitelist = [process.env.CLIENT_ORIGIN, process.env.CLIENT_ORIGIN2]
+const whitelist = [CLIENT_ORIGIN, CLIENT_ORIGIN2]
 
 const corsOptions = {
     origin: function (origin:any, callback:any) {
@@ -36,6 +37,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/v1", routers);
 app.use(errorHandler);
 
-app.listen(process.env.PORT, () => {
-    console.log("server started at port " + process.env.PORT);
+app.listen(PORT, () => {
+    console.log("server started at port " + PORT);
 });

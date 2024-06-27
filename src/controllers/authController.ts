@@ -1,5 +1,5 @@
 import User, { UserType } from "../models/User.js";
-import { MailOptions, sendMail } from "../utils/sendOTP.js";
+import { MailOptions, sendMail } from "../utils/mail/sendOTP.js";
 import {
   checkSignupItemsAndMakeStructured,
   generateOTP,
@@ -13,15 +13,17 @@ import ErrorHandler from "../utils/utility-class.js";
 import ReferMember from "../models/ReferMember.js";
 import { redis } from "../utils/redis/Redis.js";
 import ReferralLevelModel from "../models/ReferralLevel.js";
-import { COOKIE_AGE_15_MIN, COOKIE_AGE_4_DAY, JWT_AGE_15_MIN, JWT_AGE_4_DAYS } from "../utils/constants.js";
+import { BCRYPT_SALT_ROUND, CLIENT_ORIGIN, COOKIE_AGE_15_MIN, COOKIE_AGE_4_DAY, JWT_AGE_15_MIN, JWT_AGE_4_DAYS, JWT_SECRET_KEY, OTP_EXPIRY_IN_MINUTES, ROOT_DOMAIN } from "../utils/constants.js";
 import { getAuthUserKey, getUserReferDashboardKey, getUserReferShortDashboardKey } from "../utils/redis/redisKeys.js";
+import { createEmailTemplate } from "../utils/mail/createEmailTemplate.js";
+import { CHANGE_ACCOUNT_PASS, CHANGE_EMAIL_MSG, VERIFY_ACCOUNT_MSG } from "../utils/mail/messages.js";
 
 export type MiddleRequestType = {
   userId: string;
   isFromForgotPassword?: boolean;
 };
 
-const jwtSecretKey: string | undefined = process.env.JWT_SECRET_KEY;
+const jwtSecretKey: string | undefined = JWT_SECRET_KEY;
 
 export const signup = TryCatch(async (req, res, next) => {
   const body = req.body as AuthSignupUserType | null;
@@ -101,7 +103,7 @@ export const sendOTP = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("User not found.", 400));
   }
 
-  let saltRoundString: string | undefined = process.env.BCRYPT_SALT_ROUND;
+  let saltRoundString: string | undefined = BCRYPT_SALT_ROUND;
 
   if (!jwtSecretKey || !saltRoundString) {
     return next(new ErrorHandler("Internal Error Occurred!", 500));
@@ -114,24 +116,21 @@ export const sendOTP = TryCatch(async (req, res, next) => {
 
   if (!from) {
     mailOption = {
-      from:`${process.env.COMPANY_NAME}.com OTP Verification`,
       to: [user.email],
       subject: "OTP to verify your account.",
-      html: `Your OTP is ${otp}, and click <a href="${process.env.CLIENT_ORIGIN}/auth/verify?token=${otpToken}">here</a> to verify your account`,
+      html: createEmailTemplate({name:user.name, link:`${CLIENT_ORIGIN}/auth/verify?token=${otpToken}`, message:VERIFY_ACCOUNT_MSG, otp, expireTime:OTP_EXPIRY_IN_MINUTES}),
     };
   } else if (from === "forgotPassword") {
     mailOption = {
-      from:`${process.env.COMPANY_NAME}.com OTP Verification`,
       to: [user.email],
       subject: "OTP to change your password.",
-      html: `Your OTP is ${otp}, and click <a href="${process.env.CLIENT_ORIGIN}/auth/reset-password?token=${otpToken}">here</a> to reset your password.`,
+      html: createEmailTemplate({name:user.name, link:`${CLIENT_ORIGIN}/auth/reset-password?token=${otpToken}`, message:CHANGE_ACCOUNT_PASS, otp, expireTime:OTP_EXPIRY_IN_MINUTES}),
     };
   } else{
     mailOption = {
-      from:`${process.env.COMPANY_NAME}.com OTP Verification`,
       to: [email],
       subject: "OTP to verify your new email.",
-      html: `Your OTP is ${otp}.`,
+      html: createEmailTemplate({name: user.name, message: CHANGE_EMAIL_MSG, expireTime:OTP_EXPIRY_IN_MINUTES, otp}),
     };
   }
 
@@ -146,7 +145,7 @@ export const sendOTP = TryCatch(async (req, res, next) => {
 
   res.cookie("otptoken", otpToken, {
     maxAge:  COOKIE_AGE_15_MIN, // 15 minutes
-    domain: process.env.ROOT_DOMAIN, // Set to the root domain
+    domain: ROOT_DOMAIN, // Set to the root domain
     secure: true, // Ensure the cookie is sent only over HTTPS
     httpOnly: true,  // Makes the cookie accessible only via HTTP(S) requests, not JavaScript 
     sameSite: 'none'
@@ -206,7 +205,7 @@ export const verify = TryCatch(async (req, res, next) => {
 
     res.cookie("sessiontoken", sessionToken, {
       maxAge: COOKIE_AGE_4_DAY, // 4 days
-      domain: process.env.ROOT_DOMAIN, // Set to the root domain
+      domain: ROOT_DOMAIN, // Set to the root domain
       secure: true, // Ensure the cookie is sent only over HTTPS
       httpOnly: true,  // Makes the cookie accessible only via HTTP(S) requests, not JavaScript 
       sameSite: "none"
@@ -284,7 +283,7 @@ export const signin = TryCatch(async (req, res, next) => {
 
     res.cookie("sessiontoken", sessionToken, {
       maxAge: COOKIE_AGE_4_DAY, // 4 days
-      domain: process.env.ROOT_DOMAIN, // Set to the root domain
+      domain: ROOT_DOMAIN, // Set to the root domain
       secure: true, // Ensure the cookie is sent only over HTTPS
       httpOnly: true,  // Makes the cookie accessible only via HTTP(S) requests, not JavaScript 
       sameSite: 'none'

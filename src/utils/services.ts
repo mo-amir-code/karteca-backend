@@ -6,7 +6,7 @@ import { redis } from "./redis/Redis.js";
 import RatingAndReviews from "../models/RatingAndReviews.js";
 import { ProductCardReturnType, ProductCardType } from "../types/product.js";
 import jwt from "jsonwebtoken"
-import { JWT_CURRENT_DATE } from "./constants.js";
+import { BCRYPT_SALT_ROUND, JWT_CURRENT_DATE, JWT_SECRET_KEY } from "./constants.js";
 import { getProductDetailsKey, getUserCartCountKey, getUserCartItemKey, getUserCheckoutWalletsKey, getUserOrdersKey } from "./redis/redisKeys.js";
 
 export const checkSignupItemsAndMakeStructured = async (
@@ -30,7 +30,7 @@ export const checkSignupItemsAndMakeStructured = async (
     throw new Error("Required fields are missing in the sign up form.");
   }
 
-  const saltRound: number = parseInt(process.env.BCRYPT_SALT_ROUND || "12");
+  const saltRound: number = parseInt(BCRYPT_SALT_ROUND || "12");
 
   const hashedPassword = await bcrypt.hash(password, saltRound);
 
@@ -103,11 +103,11 @@ export const getEarningLevelWise = (
   }
 };
 
-export function calculateSHA256(input: string) {
-  const hash = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!);
-  hash.update(input);
-  return hash.digest("hex");
-}
+// export function calculateSHA256(input: string) {
+//   const hash = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!);
+//   hash.update(input);
+//   return hash.digest("hex");
+// }
 
 export const calculateRatingAndReviews = async (ratingAndReviews: any[]) => {
   const totalRating = ratingAndReviews.filter(
@@ -209,7 +209,7 @@ export const isJwtTokenExpired = (token:string | undefined): boolean => {
     return true
   }
 
-  const {exp} = jwt.verify(token, process.env.JWT_SECRET_KEY!) as {exp:number};
+  const {exp} = jwt.verify(token, JWT_SECRET_KEY!) as {exp:number};
 
   if(JWT_CURRENT_DATE > exp){
     return true;

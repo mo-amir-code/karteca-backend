@@ -18,11 +18,12 @@ import { redis } from "../utils/redis/Redis.js";
 import User from "../models/User.js";
 import Notification from "../models/Notification.js";
 import TxnVerifyRequest from "../models/TxnVerifyRequest.js";
-import { MailOptions, sendMail } from "../utils/sendOTP.js";
+import { MailOptions, sendAdminMail, sendMail } from "../utils/mail/sendOTP.js";
 import Subscription from "../models/Subscription.js";
 import { makePayment } from "../middlewares/payment.js";
 import WithdrawalRequest from "../models/WithdrawalRequest.js";
 import { getUserCartCountKey, getUserCartItemKey, getUserCheckoutWalletsKey, getUserNotReadNotificationCountKey, getUserNotificationKey, getUserOrdersKey, getUserReferDashboardKey, getUserReferShortDashboardKey } from "../utils/redis/redisKeys.js";
+import { ADMIN_MAIL_ID } from "../utils/constants.js";
 
 export const verifyPayment = TryCatch(async (req, res, next) => {
   const { paymentStatus, utrId, isFrom, adminNote } =
@@ -348,10 +349,9 @@ export const verifyPaymentRequest = TryCatch(async (req, res, next) => {
   let usersMailId = await User.find({ role: "admin" });
   usersMailId = usersMailId.map((user) => user.email);
 
-  if (usersMailId.length === 0) usersMailId.push(process.env.ADMIN_MAIL_ID);
+  if (usersMailId.length === 0) usersMailId.push(ADMIN_MAIL_ID);
 
   const mailData: MailOptions = {
-    from: "Karteca Pvt. Ltd.",
     to: usersMailId,
     subject: `Payment Verification Request for ${
       isFrom === "subscription" ? "Subscription" : "Shopping"
@@ -359,7 +359,7 @@ export const verifyPaymentRequest = TryCatch(async (req, res, next) => {
     html: `You got a new payment verification request for ₹${amount}`,
   };
 
-  await sendMail(mailData);
+  await sendAdminMail(mailData);
 
   return res.status(200).json({
     success: true,

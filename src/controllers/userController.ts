@@ -27,6 +27,7 @@ import {
 import { redis } from "../utils/redis/Redis.js";
 import bcrypt from "bcrypt";
 import { getProductDetailsKey, getProductRatingKey, getUserAddressesKey, getUserNotReadNotificationCountKey, getUserNotificationKey, getUserProfileKey, getUserWishlistKey } from "../utils/redis/redisKeys.js";
+import { BCRYPT_SALT_ROUND } from "../utils/constants.js";
 
 export const fetchUserProfile = TryCatch(async (req, res, next) => {
   const { userId } = req.params;
@@ -573,7 +574,7 @@ export const updateUserPassword = TryCatch(async (req, res, next) => {
 
   user.password = await bcrypt.hash(
     newPassword,
-    parseInt(process.env.BCRYPT_SALT_ROUND!)
+    parseInt(BCRYPT_SALT_ROUND!)
   );
   await user.save();
 

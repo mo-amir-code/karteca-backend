@@ -1,14 +1,14 @@
 import {Redis} from "ioredis";
-import { TryCatch } from "../../middlewares/error.js";
 import { Response } from "express";
+import { REDIS_LOCAL_PORT, REDIS_URI } from "../constants.js";
 
 
 let redisInstance;
 try {
-    if (process.env.REDIS_URI) {
-        redisInstance = new Redis(process.env.REDIS_URI);
+    if (REDIS_URI) {
+        redisInstance = new Redis(REDIS_URI);
     } else {
-        redisInstance = new Redis(process.env.REDIS_LOCAL_PORT!);
+        redisInstance = new Redis(REDIS_LOCAL_PORT!);
     }
 } catch (error) {
     console.error("Redis Error ===> ", error)
