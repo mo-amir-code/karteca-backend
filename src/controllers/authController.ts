@@ -134,6 +134,13 @@ export const sendOTP = TryCatch(async (req, res, next) => {
     };
   }
 
+  const { success, msg } =  await sendMail(mailOption);
+
+  if(!success){
+    return next(new ErrorHandler(msg, 400));
+  }
+
+
   let saltRound: number = parseInt(saltRoundString);
 
   const otpHash: string = await bcrypt.hash(otp.toString(), saltRound);
@@ -150,8 +157,6 @@ export const sendOTP = TryCatch(async (req, res, next) => {
     httpOnly: true,  // Makes the cookie accessible only via HTTP(S) requests, not JavaScript 
     sameSite: 'none'
   });
-
-  await sendMail(mailOption);
 
   return res.status(200).json({
     success: true,

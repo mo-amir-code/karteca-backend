@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 import nodemailer from 'nodemailer';
-import { EMAIL_ID, MAIL_PASS_KEY, RESEND_API_KEY } from '../constants.js';
+import { DOMAIN, EMAIL_ID, MAIL_PASS_KEY, RESEND_API_KEY } from '../constants.js';
 
 
 const transporter = nodemailer.createTransport({
@@ -21,10 +21,15 @@ export interface MailOptions {
     html: string;
 }
 
-export const sendMail = async ({ to, subject, html }: MailOptions): Promise<any> => {
+interface MailReturnType{
+    msg:string,
+    success: boolean
+}
+
+export const sendMail = async ({ to, subject, html }: MailOptions): Promise<MailReturnType> => {
     try {
         let mailOptions = {
-            from:`onboarding@resend.dev`,
+            from:`noreply@${DOMAIN}`,
             to,
             subject,
             html
@@ -33,11 +38,20 @@ export const sendMail = async ({ to, subject, html }: MailOptions): Promise<any>
         const { data, error } =  await resend.emails.send(mailOptions);
 
         if (error) {
-            console.error(error)
+            throw new Error(error as any);
+        }
+
+        return {
+             msg: "Mail sent successfully",
+             success: true
         }
 
     } catch (error) {
         console.log(error);
+        return {
+            msg: "Mail is not send",
+            success: false
+        }
     }
 }
 

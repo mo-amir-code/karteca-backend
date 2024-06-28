@@ -8,6 +8,7 @@ export const JWT_AGE_4_DAYS = Math.floor(Date.now() / 1000 + 60 * 60 * 24 * 4);
 export const JWT_AGE_15_MIN = Math.floor(Date.now() / 1000 + 60 * 15);
 export const JWT_CURRENT_DATE = Math.floor(Date.now() / 1000);
 export const OTP_EXPIRY_IN_MINUTES = 15;
+export const DOMAIN = "karteca.com"
 
 // Environments Variables
 const PORT = process.env.PORT;
@@ -16,7 +17,6 @@ const ADMIN_MAIL_ID = process.env.ADMIN_MAIL_ID;
 const ADMIN_UPI = process.env.ADMIN_UPI;
 const COMPANY_NAME = process.env.COMPANY_NAME;
 const PRIMARY_COLOR = process.env.PRIMARY_COLOR;
-const ROOT_DOMAIN = process.env.ROOT_DOMAIN;
 const MAIL_PASS_KEY = process.env.MAIL_PASS_KEY;
 const EMAIL_ID = process.env.EMAIL_ID;
 const SERVER_ORIGIN = process.env.SERVER_ORIGIN;
@@ -25,6 +25,7 @@ const CLIENT_ORIGIN2 = process.env.CLIENT_ORIGIN2;
 const BCRYPT_SALT_ROUND = process.env.BCRYPT_SALT_ROUND;
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 const DEVELOPMENT = process.env.DEVELOPMENT;
+const ROOT_DOMAIN = process.env.ROOT_DOMAIN;
 const CLOUD_NAME = process.env.CLOUD_NAME;
 const API_KEY = process.env.API_KEY;
 const API_SECRET = process.env.API_SECRET;
