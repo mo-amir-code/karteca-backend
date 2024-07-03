@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 import nodemailer from 'nodemailer';
-import { DOMAIN, EMAIL_ID, MAIL_PASS_KEY, RESEND_API_KEY } from '../constants.js';
+import { DEVELOPMENT, DOMAIN, EMAIL_ID, MAIL_PASS_KEY, RESEND_API_KEY } from '../constants.js';
 
 
 const transporter = nodemailer.createTransport({
@@ -26,10 +26,12 @@ interface MailReturnType{
     success: boolean
 }
 
+const from = (DEVELOPMENT === "vercel" || DEVELOPMENT === "development")? "onboarding@resend.dev" : DOMAIN;
+
 export const sendMail = async ({ to, subject, html }: MailOptions): Promise<MailReturnType> => {
     try {
         let mailOptions = {
-            from:`noreply@${DOMAIN}`,
+            from,
             to,
             subject,
             html
