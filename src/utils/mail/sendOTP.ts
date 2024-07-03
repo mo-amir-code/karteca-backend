@@ -26,7 +26,7 @@ interface MailReturnType{
     success: boolean
 }
 
-const from = (DEVELOPMENT === "vercel" || DEVELOPMENT === "development")? "onboarding@resend.dev" : DOMAIN;
+const from = (DEVELOPMENT === "vercel" || DEVELOPMENT === "development")? "onboarding@resend.dev" : `noreply@${DOMAIN}`;
 
 export const sendMail = async ({ to, subject, html }: MailOptions): Promise<MailReturnType> => {
     try {
